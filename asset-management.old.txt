@@ -1,0 +1,180 @@
+<?php
+
+/**
+ * The plugin bootstrap file
+ *
+ * This file is read by WordPress to generate the plugin information in the plugin
+ * admin area. This file also includes all of the dependencies used by the plugin,
+ * registers the activation and deactivation functions, and defines a function
+ * that starts the plugin.
+ *
+ * @link              https://github.com/galyonj
+ * @since             1.0.0
+ * @package           Coe_Am
+ *
+ * @wordpress-plugin
+ * Plugin Name:       Asset Management
+ * Plugin URI:        https://github.com/galyonj/coe-asset-management
+ * Description:       Create an Assets custom post type and provide tools for managing Assets taxonomy and metadata.
+ * Version:           1.0.0
+ * Author:            John Galyon
+ * Author URI:        https://github.com/galyonj
+ * License:           GPL-2.0+
+ * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * Text Domain:       coe-am
+ * Domain Path:       /languages
+ */
+
+// If this file is called directly, abort.
+defined( 'ABSPATH' ) || die( 'That\'s illegal.' );
+
+/**
+ * Load our Admin UI class that powers our form inputs.
+ *
+ * @since 1.0.0
+ *
+ * @internal
+ */
+function coe_am_load_ui_class() {
+	require_once plugin_dir_path( __FILE__ ) . 'classes/class-coe-am-admin-ui.php';
+}
+add_action( 'init', 'coe_am_load_ui_class' );
+
+/**
+ * Register deactivation hook
+ *
+ * @since 1.0.0
+ * @internal
+ */
+function coe_am_deactivation() {
+	flush_rewrite_rules();
+}
+register_deactivation_hook( __FILE__, 'coe_am_deactivation' );
+
+function coe_am_activation() {
+	require_once plugin_dir_path( __FILE__ ) . 'inc/register-assets.php';
+
+	/**
+	 * Remove rewrite rules and then recreate rewrite rules.
+	 *
+	 * This function is useful when used with custom post types as it allows for automatic flushing of the WordPress
+	 * rewrite rules (usually needs to be done manually for new custom post types).
+	 * However, this is an expensive operation so it should only be used when absolutely necessary.
+	 * See Usage section for more details.
+	 *
+	 * Flushing the rewrite rules is an expensive operation, there are tutorials and examples that suggest
+	 * executing it on the 'init' hook. This is bad practice. It should be executed either
+	 * on the 'shutdown' hook, or on plugin/theme (de)activation.
+	 *
+	 * @link https://codex.wordpress.org/Function_Reference/flush_rewrite_rules
+	 */
+	flush_rewrite_rules();
+}
+add_action( 'init', 'coe_am_activation' );
+
+/**
+ * Register the plugin's text domain
+ *
+ * @since 1.0.0
+ * @internal
+ */
+function coe_am_load_textdomain() {
+	load_plugin_textdomain( 'coe-am' );
+}
+add_action( 'plugins_loaded', 'coe_am_load_textdomain' );
+
+function coe_am_enqueue() {
+	wp_enqueue_style( 'bootstrap', plugin_dir_url( __FILE__ ) . 'assets/bootstrap.min.css', array(), $plugin_version, 'all' );
+}
+add_action( 'admin_enqueue_scripts', 'coe_am_enqueue' );
+
+/**
+ * Load the submenu for the plugin/post_type
+ *
+ * @since 1.0.0
+ */
+
+function coe_am_create_submenu() {
+	$capability  = apply_filters( 'coe_am_required_caps', 'manage_options' );
+	$parent_path = 'edit.php?post_type=asset';
+
+	add_submenu_page( $parent_path, __( 'Manage Metadata', 'coe-am' ), __( 'Manage Metadata', 'coe-am' ), $capability, 'metadata', 'coe_am_metadata' );
+}
+add_action( 'admin_menu', 'coe_am_create_submenu' );
+
+/**
+ * Fire our COE_AM Loaded hook.
+ *
+ * @since 1.0.0
+ *
+ * @internal Use `coe_am_loaded` hook.
+ */
+function coe_am_loaded() {
+
+	/**
+	 * Fires upon plugins_loaded WordPress hook.
+	 *
+	 * COE_AM loads its required files on this hook.
+	 *
+	 * @since 1.0.0
+	 */
+	do_action( 'coe_am_loaded' );
+}
+add_action( 'plugins_loaded', 'coe_am_loaded' );
+
+/**
+ * Construct and output tab navigation.
+ *
+ * @since 1.0.0
+ *
+ * @param string $page
+ * @return string
+ */
+function coe_am_settings_tab_menu( $page = 'metadata' ) {
+
+	/**
+	 * Filters the tabs to render on a given page.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array  $value Array of tabs to render.
+	 * @param string $page  Current page being displayed.
+	 */
+	$tabs = (array) apply_filters( 'coe_am_get_tabs', array(), $page );
+
+	if ( empty( $tabs['page_title'] ) ) {
+		return '';
+	}
+
+	$tmpl = '<h1>%s</h1><nav class="nav-tab-wrapper wp-clearfix" aria-label="Secondary menu">%s</nav>';
+
+	$tab_output = '';
+	foreach ( $tabs['tabs'] as $tab ) {
+		$tab_output .= sprintf(
+			'<a class="%s" href="%s" aria-selected="%s">%s</a>',
+			implode( ' ', $tab['classes'] ),
+			$tab['url'],
+			$tab['aria-selected'],
+			$tab['text']
+		);
+	}
+
+	printf(
+		$tmpl,
+		$tabs['page_title'],
+		$tab_output
+	);
+}
+
+
+/**
+ * load the submenus
+ *
+ * @since 1.0.0
+ */
+function coe_am_load_submenu() {
+	require_once plugin_dir_path( __FILE__ ) . 'inc/utils.php';
+	//require_once plugin_dir_path( __FILE__ ) . 'inc/manage-metadata.php';
+	require_once plugin_dir_path( __FILE__ ) . 'inc/metadata.php';
+}
+add_action( 'coe_am_loaded', 'coe_am_load_submenu' );
