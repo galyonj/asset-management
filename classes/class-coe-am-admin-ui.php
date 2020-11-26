@@ -1,6 +1,6 @@
 <?php
 /**
- * COE Asset Management Admin UI
+ * Methods to repeatably construct admin form elements
  *
  * @package COE_AM
  * @subpackage Admin_UI
@@ -9,573 +9,262 @@
  * @license GPL-2.0+
  */
 
-class COE_AM_Admin_UI {
-
+/**
+ *  <div class="row form-group">
+ *      <label for="" class="col-sm-3 col-form-label">
+ *          <strong></strong><span></span>
+ *      </label>
+ *      <div class="com-sm-9">
+ *          <input type="text">
+ *          <p></p>
+ *          <span class="help-text"></span>
+ *      </div>
+ *  </div>
+ */
+class Coe_Am_Admin_UI {
 	/**
-	 * Return an opening `<tr>` tag.
+	 * Create the opening row tag
 	 *
 	 * @since 1.0.0
-	 *
-	 * @return string $value Opening `<tr>` tag with attributes.
+	 * @return string opening div.row.form-group
 	 */
-	public function get_tr_start() {
-		return '<tr valign="top">';
+	public function open_row_div() {
+		return '<div class="row form-group">';
 	}
 
 	/**
-	 * Return a closing `</tr>` tag.
+	 * Create the closing row tag
 	 *
 	 * @since 1.0.0
-	 *
-	 * @return string $value Closing `</tr>` tag.
+	 * @return string closing div.row
 	 */
-	public function get_tr_end() {
-		return '</tr>';
+	public function close_div() {
+		return '</div>';
 	}
 
 	/**
-	 * Return an opening `<th>` tag.
+	 * Create the opening col tag
 	 *
 	 * @since 1.0.0
-	 *
-	 * @return string $value Opening `<th>` tag with attributes.
+	 * @return string opening div.col
 	 */
-	public function get_th_start() {
-		return '<th scope="row">';
+	public function open_col_div() {
+		return '<div class="col-sm-9">';
 	}
 
 	/**
-	 * Return a closing `</th>` tag.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string $value Closing `</th>` tag.
+	 * Create the opening label tag
 	 */
-	public function get_th_end() {
-		return '</th>';
-	}
+	public function make_label( $label_for = '', $label_text = '', $required = false ) {
+		$label  = '<label for="' . esc_attr( $label_for ) . '" class="col-sm-3 col-form-label" style="font-weight: bold;">';
+		$label .= wp_strip_all_tags( $label_text );
 
-	/**
-	 * Return an opening `<td>` tag.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string $value Opening `<td>` tag.
-	 */
-	public function get_td_start() {
-		return '<td>';
-	}
-
-	/**
-	 * Return a closing `</td>` tag.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @return string $value Closing `</td>` tag.
-	 */
-	public function get_td_end() {
-		return '</td>';
-	}
-
-	/**
-	 * Return an opening `<fieldset>` tag.
-	 *
-	 * @since 1.2.0
-	 * @since 1.3.0 Added $args parameter.
-	 *
-	 * @param array $args Array of arguments.
-	 * @return string $value Opening `<fieldset>` tag.
-	 */
-	public function get_fieldset_start( $args = array() ) {
-		$fieldset = '<fieldset';
-
-		if ( ! empty( $args['id'] ) ) {
-			$fieldset .= ' id="' . esc_attr( $args['id'] ) . '"';
-		}
-
-		if ( ! empty( $args['classes'] ) ) {
-			$classes   = 'class="' . implode( ' ', $args['classes'] ) . '"';
-			$fieldset .= ' ' . $classes;
-		}
-
-		if ( ! empty( $args['aria-expanded'] ) ) {
-			$fieldset .= ' aria-expanded="' . $args['aria-expanded'] . '"';
-		}
-
-		$fieldset .= ' tabindex="0">';
-
-		return $fieldset;
-	}
-
-	/**
-	 * Return an closing `<fieldset>` tag.
-	 *
-	 * @since 1.2.0
-	 *
-	 * @return string $value Closing `<fieldset>` tag.
-	 */
-	public function get_fieldset_end() {
-		return '</fieldset>';
-	}
-
-	/**
-	 * Return an opening `<legend>` tag.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @return string
-	 */
-	public function get_legend_start() {
-		return '<legend class="screen-reader-text">';
-	}
-
-	/**
-	 * Return a closing `</legend>` tag.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @return string
-	 */
-	public function get_legend_end() {
-		return '</legend>';
-	}
-
-	/**
-	 * Return string wrapped in a `<p>` tag.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $text Content to wrap in a `<p>` tag.
-	 * @return string $value Content wrapped in a `<p>` tag.
-	 */
-	public function get_p( $text = '' ) {
-		return '<p>' . $text . '</p>';
-	}
-
-	/**
-	 * Return a form <label> with for attribute.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $label_for  Form input to associate `<label>` with.
-	 * @param string $label_text Text to display in the `<label>` tag.
-	 * @return string $value `<label>` tag with filled out parts.
-	 */
-	public function get_label( $label_for = '', $label_text = '' ) {
-		return '<label for="' . esc_attr( $label_for ) . '">' . wp_strip_all_tags( $label_text ) . '</label>';
-	}
-
-	/**
-	 * Return an html attribute denoting a required field.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @param bool $required Whether or not the field is required.
-	 * @return string `Required` attribute.
-	 */
-	public function get_required_attribute( $required = false ) {
-		$attr = '';
 		if ( $required ) {
-			$attr .= 'required="true"';
+			$label .= '<span style="color: #ff0000; padding-left: 2px;">*</span>';
 		}
-		return $attr;
+
+		$label .= '</label>';
+
+		return $label;
+	}
+
+	public function make_required( $required = false ) {
+		$attr = $required ? true : false;
+
+		return ' aria-required="' . $attr . '" required="' . $attr . '"';
+	}
+
+	public function make_description( $name = '', $help_text = '', $additional_text = '' ) {
+		$text  = '<span class="' . $name . '-help form-text text-muted" style="font-style: italic;';
+		$text .= ( $additional_text ) ? ' margin-bottom: 10px;">' : '">';
+		$text .= $help_text . '</span>';
+
+		if ( $additional_text ) {
+			$text .= '<span class="' . $name . '-additional-text">' . $additional_text . '</span>';
+		}
+
+		return $text;
+	}
+
+	public function make_placeholder( $placeholder = '' ) {
+		return ' placeholder="' . $placeholder . '" ';
+	}
+
+	public function make_maxlength( $max_length = '' ) {
+		return ' maxlength="' . $max_length . '"';
 	}
 
 	/**
-	 * Return a `<span>` to indicate required status, with class attribute.
+	 * Create an array containing the default parameters for
+	 * our inputs
 	 *
 	 * @since 1.0.0
-	 *
-	 * @return string Span tag.
+	 * @a
 	 */
-	public function get_required_span() {
-		return ' <span class="required">*</span>';
-	}
-
-	/**
-	 * Return an aria-required attribute set to true.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @param bool $required Whether or not the field is required.
-	 * @return string Aria required attribute
-	 */
-	public function get_aria_required( $required = false ) {
-		$attr = $required ? 'true' : 'false';
-		return 'aria-required="' . $attr . '"';
-	}
-
-	/**
-	 * Return an `<a>` tag with title attribute holding help text.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $help_text Text to use in the title attribute.
-	 * @return string <a> tag with filled out parts.
-	 */
-	public function get_help( $help_text = '' ) {
-		return '<a href="#" class="cptui-help dashicons-before dashicons-editor-help" title="' . esc_attr( $help_text ) . '"></a>';
-	}
-
-	/**
-	 * Return a `<span>` tag with the help text.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @param string $help_text Text to display after the input.
-	 * @return string
-	 */
-	public function get_description( $help_text = '' ) {
-		return '<p class="cptui-field-description description">' . $help_text . '</p>';
-	}
-
-	/**
-	 * Return a maxlength HTML attribute with a specified length.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $length How many characters the max length should be set to.
-	 * @return string $value Maxlength HTML attribute.
-	 */
-	public function get_maxlength( $length = '' ) {
-		return 'maxlength="' . esc_attr( $length ) . '"';
-	}
-
-	/**
-	 * Return a onblur HTML attribute for a specified value.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $text Text to place in the onblur attribute.
-	 * @return string $value Onblur HTML attribute.
-	 */
-	public function get_onblur( $text = '' ) {
-		return 'onblur="' . esc_attr( $text ) . '"';
-	}
-
-	/**
-	 * Return a placeholder HTML attribtue for a specified value.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @param string $text Text to place in the placeholder attribute.
-	 * @return string $value Placeholder HTML attribute.
-	 */
-	public function get_placeholder( $text = '' ) {
-		return 'placeholder="' . esc_attr( $text ) . '"';
-	}
-
-	/**
-	 * Return a span that will only be visible for screenreaders.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @param string $text Text to visually hide.
-	 * @return string $value Visually hidden text meant for screen readers.
-	 */
-	public function get_hidden_text( $text = '' ) {
-		return '<span class="visuallyhidden">' . $text . '</span>';
-	}
-
-	/**
-	 * Return a populated `<select>` input.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array $args Arguments to use with the `<select>` input.
-	 * @return string $value Complete <select> input with options and selected attribute.
-	 */
-	public function get_select_input( $args = array() ) {
-		$defaults = $this->get_default_input_parameters(
-			array( 'selections' => array() )
+	public function get_default_input_parameters( $additions = array() ) {
+		return array_merge(
+			array(
+				'field_desc'  => '',
+				'label_text'  => '',
+				'name_arr'    => '',
+				'name'        => '',
+				'placeholder' => '',
+				'required'    => false,
+				'textvalue'   => '',
+				'wrap'        => true,
+			),
+			(array) $additions
 		);
-
-		$args = wp_parse_args( $args, $defaults );
-
-		$value = '';
-		if ( $args['wrap'] ) {
-			$value  = $this->get_tr_start();
-			$value .= $this->get_th_start();
-			$value .= $this->get_label( $args['name'], $args['labeltext'] );
-			if ( $args['required'] ) {
-				$value .= $this->get_required_span();
-			}
-			if ( ! empty( $args['helptext'] ) ) {
-				$value .= $this->get_help( $args['helptext'] );
-			}
-			$value .= $this->get_th_end();
-			$value .= $this->get_td_start();
-		}
-
-		$value .= '<select id="' . $args['name'] . '" name="' . $args['namearray'] . '[' . $args['name'] . ']">';
-		if ( ! empty( $args['selections']['options'] ) && is_array( $args['selections']['options'] ) ) {
-			foreach ( $args['selections']['options'] as $val ) {
-				$result = '';
-				$bool   = disp_boolean( $val['attr'] );
-
-				if ( is_numeric( $args['selections']['selected'] ) ) {
-					$selected = disp_boolean( $args['selections']['selected'] );
-				} elseif ( in_array( $args['selections']['selected'], array( 'true', 'false' ), true ) ) {
-					$selected = $args['selections']['selected'];
-				}
-
-				if ( ! empty( $selected ) && $selected === $bool ) {
-					$result = ' selected="selected"';
-				} else {
-					if ( array_key_exists( 'default', $val ) && ! empty( $val['default'] ) ) {
-						if ( empty( $selected ) ) {
-							$result = ' selected="selected"';
-						}
-					}
-				}
-
-				if ( ! is_numeric( $args['selections']['selected'] ) && ( ! empty( $args['selections']['selected'] ) && $args['selections']['selected'] === $val['attr'] ) ) {
-					$result = ' selected="selected"';
-				}
-
-				$value .= '<option value="' . $val['attr'] . '"' . $result . '>' . $val['text'] . '</option>';
-			}
-		}
-		$value .= '</select>';
-
-		if ( ! empty( $args['aftertext'] ) ) {
-			$value .= ' ' . $this->get_description( $args['aftertext'] );
-		}
-
-		if ( $args['wrap'] ) {
-			$value .= $this->get_td_end();
-			$value .= $this->get_tr_end();
-		}
-
-		return $value;
 	}
 
 	/**
-	 * Return a text input.
+	 * Create the text input
 	 *
 	 * @since 1.0.0
-	 *
-	 * @param array $args Arguments to use with the text input.
-	 * @return string Complete text `<input>` with proper attributes.
+	 * @param array $args
+	 * @return string input element
 	 */
-	public function get_text_input( $args = array() ) {
+	public function make_text_input( $args = array() ) {
 		$defaults = $this->get_default_input_parameters(
 			array(
 				'maxlength' => '',
 				'onblur'    => '',
 			)
 		);
-		$args     = wp_parse_args( $args, $defaults );
 
-		$value = '';
+		$args = wp_parse_args( $args, $defaults );
+
+		$val = '';
 		if ( $args['wrap'] ) {
-			$value .= $this->get_tr_start();
-			$value .= $this->get_th_start();
-			$value .= $this->get_label( $args['name'], $args['labeltext'] );
-			if ( $args['required'] ) {
-				$value .= $this->get_required_span();
-			}
-			$value .= $this->get_th_end();
-			$value .= $this->get_td_start();
+			$val .= $this->open_row_div();
+			$val .= $this->make_label( $args['name'], $args['label_text'], $args['required'] );
+			$val .= $this->open_col_div();
 		}
 
-		$value .= '<input type="text" id="' . $args['name'] . '" name="' . $args['namearray'] . '[' . $args['name'] . ']" value="' . $args['textvalue'] . '"';
+		// And now we output the input itself.
+		$val .= '<input type="text" class="form-control form-control-sm" id="' . $args['name'] . '" name="' . $args['name_arr'] . '[' . $args['name'] . ']"';
+
+		if ( $args['placeholder'] ) {
+			$val .= $this->make_placeholder( $args['placeholder'] );
+		}
 
 		if ( $args['maxlength'] ) {
-			$value .= ' ' . $this->get_maxlength( $args['maxlength'] );
+			$val .= $this->make_maxlength( $args['maxlength'] );
 		}
 
-		if ( $args['onblur'] ) {
-			$value .= ' ' . $this->get_onblur( $args['onblur'] );
+		if ( $args['required'] ) {
+			$val .= $this->make_required( $args['required'] );
 		}
 
-		$value .= ' ' . $this->get_aria_required( $args['required'] );
+		$val .= '/>';
 
-		$value .= ' ' . $this->get_required_attribute( $args['required'] );
-
-		if ( ! empty( $args['aftertext'] ) ) {
-			if ( $args['placeholder'] ) {
-				$value .= ' ' . $this->get_placeholder( $args['aftertext'] );
-			}
-		}
-
-		if ( ! empty( $args['data'] ) ) {
-			foreach ( $args['data'] as $dkey => $dvalue ) {
-				$value .= " data-{$dkey}=\"{$dvalue}\"";
-			}
-		}
-
-		$value .= ' />';
-
-		if ( ! empty( $args['aftertext'] ) ) {
-			$value .= $this->get_hidden_text( $args['aftertext'] );
-		}
-
-		if ( $args['helptext'] ) {
-			$value .= '<br/>' . $this->get_description( $args['helptext'] );
+		if ( $args['field_desc'] ) {
+			$val .= $this->make_description( $args['name'], $args['field_desc'], $args['additional_text'] );
 		}
 
 		if ( $args['wrap'] ) {
-			$value .= $this->get_td_end();
-			$value .= $this->get_tr_end();
+			$val .= $this->close_div();
+			$val .= $this->close_div();
 		}
 
-		return $value;
+		return $val;
 	}
 
 	/**
-	 * Return a `<textarea>` input.
+	 * Create and output a select field
 	 *
 	 * @since 1.0.0
-	 *
-	 * @param array $args Arguments to use with the textarea input.
-	 * @return string $value Complete <textarea> input with proper attributes.
+	 * @param  array $args
+	 * @return string select field
 	 */
-	public function get_textarea_input( $args = array() ) {
+	public function make_select_input( $args = array() ) {
+		$defaults = $this->get_default_input_parameters(
+			array( 'options' => array() )
+		);
+
+		$args = wp_parse_args( $args, $defaults );
+
+		$val = '';
+		if ( $args['wrap'] ) {
+			$val .= $this->open_row_div();
+			$val .= $this->make_label( $args['name'], $args['label_text'], $args['required'] );
+			$val .= $this->open_col_div();
+		}
+
+		$val .= '<select class="form-control" id="' . $args['name'] . '" name="' . $args['name_arr'] . '[' . $args['name'] . ']">';
+
+		foreach ( $args['options'] as $opt ) {
+			$selected = ( isset( $opt['selected'] ) ) ? 'selected' : '';
+			$val     .= '<option value="' . $opt['value'] . '"' . $selected . '>' . $opt['text'] . '</option>';
+		}
+
+		$val .= '</select>';
+		if ( $args['field_desc'] ) {
+			$val .= $this->make_description( $args['name'], $args['field_desc'], $args['additional_text'] );
+		}
+
+		if ( $args['wrap'] ) {
+			$val .= $this->close_div();
+			$val .= $this->close_div();
+		}
+
+		return $val;
+	}
+
+	/**
+	 * Create and output a textarea field
+	 *
+	 * @since 1.0.0
+	 * @param  array $args
+	 * @return string textarea field
+	 */
+	public function make_textarea( $args = array() ) {
 		$defaults = $this->get_default_input_parameters(
 			array(
 				'rows' => '',
 				'cols' => '',
 			)
 		);
-		$args     = wp_parse_args( $args, $defaults );
 
-		$value = '';
+		$args = wp_parse_args( $args, $defaults );
+
+		$val = '';
+		if ( $args['wrap'] ) {
+			$val .= $this->open_row_div();
+			$val .= $this->make_label( $args['name'], $args['label_text'], $args['required'] );
+			$val .= $this->open_col_div();
+		}
+
+		// And now we output the input itself.
+		$val .= '<textarea class="form-control form-control-sm" id="' . $args['name'] . '" name="' . $args['name_arr'] . '[' . $args['name'] . ']"';
+
+		if ( $args['placeholder'] ) {
+			$val .= $this->make_placeholder( $args['placeholder'] );
+		}
+
+		if ( $args['required'] ) {
+			$val .= $this->make_required( $args['required'] );
+		}
+
+		if ( $args['rows'] ) {
+			$val .= 'rows=' . $args['rows'] . '" ';
+		}
+
+		if ( $args['cols'] ) {
+			$val .= 'cols="' . $args['cols'] . '" ';
+		}
+
+		$val .= '/></textarea>';
+
+		if ( $args['field_desc'] ) {
+			$val .= $this->make_description( $args['name'], $args['field_desc'], $args['additional_text'] );
+		}
 
 		if ( $args['wrap'] ) {
-			$value .= $this->get_tr_start();
-			$value .= $this->get_th_start();
-			$value .= $this->get_label( $args['name'], $args['labeltext'] );
-			if ( $args['required'] ) {
-				$value .= $this->get_required_span();
-			}
-			$value .= $this->get_th_end();
-			$value .= $this->get_td_start();
+			$val .= $this->close_div();
+			$val .= $this->close_div();
 		}
 
-		$value .= '<textarea id="' . $args['name'] . '" name="' . $args['namearray'] . '[' . $args['name'] . ']" rows="' . $args['rows'] . '" cols="' . $args['cols'] . '">' . $args['textvalue'] . '</textarea>';
-
-		if ( ! empty( $args['aftertext'] ) ) {
-			$value .= $args['aftertext'];
-		}
-
-		if ( $args['helptext'] ) {
-			$value .= '<br/>' . $this->get_description( $args['helptext'] );
-		}
-
-		if ( $args['wrap'] ) {
-			$value .= $this->get_td_end();
-			$value .= $this->get_tr_end();
-		}
-
-		return $value;
-	}
-
-	/**
-	 * Return a checkbox `<input>`.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array $args Arguments to use with the checkbox input.
-	 * @return string $value Complete checkbox `<input>` with proper attributes.
-	 */
-	public function get_check_input( $args = array() ) {
-		$defaults = $this->get_default_input_parameters(
-			array(
-				'checkvalue'    => '',
-				'checked'       => 'true',
-				'checklisttext' => '',
-				'default'       => false,
-			)
-		);
-		$args     = wp_parse_args( $args, $defaults );
-
-		$value = '';
-		if ( $args['wrap'] ) {
-			$value .= $this->get_tr_start();
-			$value .= $this->get_th_start();
-			$value .= $args['checklisttext'];
-			if ( $args['required'] ) {
-				$value .= $this->get_required_span();
-			}
-			$value .= $this->get_th_end();
-			$value .= $this->get_td_start();
-		}
-
-		if ( isset( $args['checked'] ) && 'false' === $args['checked'] ) {
-			$value .= '<input type="checkbox" id="' . $args['name'] . '" name="' . $args['namearray'] . '[]" value="' . $args['checkvalue'] . '" />';
-		} else {
-			$value .= '<input type="checkbox" id="' . $args['name'] . '" name="' . $args['namearray'] . '[]" value="' . $args['checkvalue'] . '" checked="checked" />';
-		}
-		$value .= $this->get_label( $args['name'], $args['labeltext'] );
-		$value .= '<br/>';
-
-		if ( $args['wrap'] ) {
-			$value .= $this->get_td_end();
-			$value .= $this->get_tr_end();
-		}
-
-		return $value;
-	}
-
-	/**
-	 * Return a button `<input>`.
-	 *
-	 * @since 1.3.0
-	 *
-	 * @param array $args Arguments to use with the button input.
-	 * @return string Complete button `<input>`.
-	 */
-	public function get_button( $args = array() ) {
-		$value  = '';
-		$value .= '<input id="' . $args['id'] . '" class="button" type="button" value="' . $args['textvalue'] . '" />';
-
-		return $value;
-	}
-
-	/**
-	 * Returns an HTML block for previewing the menu icon.
-	 *
-	 * @param string $menu_icon URL or a name of the dashicons class.
-	 *
-	 * @return string $value HTML block with a layout of the menu icon preview.
-	 * @since 1.8.1
-	 */
-	public function get_menu_icon_preview( $menu_icon = '' ) {
-		$content = '';
-		if ( ! empty( $menu_icon ) ) {
-			$content = '<img src="' . $menu_icon . '">';
-			if ( 0 === strpos( $menu_icon, 'dashicons-' ) ) {
-				$content = '<div class="dashicons-before ' . $menu_icon . '"></div>';
-			}
-		}
-
-		return '<div id="menu_icon_preview">' . $content . '</div>';
-	}
-
-	/**
-	 * Return some array_merged default arguments for all input types.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array $additions Arguments array to merge with our defaults.
-	 * @return array $value Merged arrays for our default parameters.
-	 */
-	public function get_default_input_parameters( $additions = array() ) {
-		return array_merge(
-			array(
-				'namearray'      => '',
-				'name'           => '',
-				'textvalue'      => '',
-				'labeltext'      => '',
-				'aftertext'      => '',
-				'helptext'       => '',
-				'helptext_after' => false,
-				'required'       => false,
-				'wrap'           => true,
-				'placeholder'    => true,
-			),
-			(array) $additions
-		);
+		return $val;
 	}
 }

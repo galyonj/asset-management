@@ -99,5 +99,110 @@ function coe_am_load_textdomain() {
 }
 add_action( 'plugins_loaded', 'coe_am_load_textdomain' );
 
+function coe_am_enqueue_styles() {
+	$_coe = coe_am_populate_constants();
+
+	wp_enqueue_style( 'bootstrap-css', $_coe['url'] . 'assets/bootstrap.min.css' );
+}
+add_action( 'admin_enqueue_scripts', 'coe_am_enqueue_styles' );
+
+/**
+ * Create the submenu for our plugin and post type
+ * on the admin dashboard.
+ *
+ * @since 1.0.0
+ */
+function coe_am_create_submenu() {
+	$_coe        = coe_am_populate_constants();
+	$capability  = apply_filters( 'coe_am_required_caps', 'manage_options' );
+	$parent_path = 'edit.php?post_type=asset';
+
+	add_submenu_page( $parent_path, __( 'Manage Metadata', $_coe['text'] ), __( 'Manage Metadata', $_coe['text'] ), $capability, 'metadata', 'coe_am_metadata_html' );
+	//add_submenu_page( $parent_path, __( 'Help', $_coe['text'] ), __( 'Help', $_coe['text'] ), $capability, 'help', 'display_help' );
+}
+add_action( 'admin_menu', 'coe_am_create_submenu' );
+
+require_once $_coe['path'] . 'classes/class-coe-am-admin-ui.php';
+require_once $_coe['path'] . 'inc/utils.php';
 require_once $_coe['path'] . 'inc/register-cpt.php';
-require_once $_coe['path'] . 'inc/submenu.php';
+require_once $_coe['path'] . 'inc/metadata.php';
+
+/**
+ * Register our users' custom taxonomies.
+ *
+ * @since 0.5.0
+ *
+ * @internal
+ */
+function coe_am_create_custom_taxonomies() {
+	$taxes = get_option( 'coe_am_taxonomies' );
+
+	if ( empty( $taxes ) ) {
+		return;
+	}
+
+	/**
+	 * Fires before the start of the taxonomy registrations.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param array $taxes Array of taxonomies to register.
+	 */
+	do_action( 'coe_am_pre_register_taxonomies', $taxes );
+
+	if ( is_array( $taxes ) ) {
+		foreach ( $taxes as $tax ) {
+			/**
+			 * Filters whether or not to skip registration of the current iterated taxonomy.
+			 *
+			 * Dynamic part of the filter name is the chosen taxonomy slug.
+			 *
+			 * @since 1.7.0
+			 *
+			 * @param bool  $value Whether or not to skip the taxonomy.
+			 * @param array $tax   Current taxonomy being registered.
+			 */
+			if ( (bool) apply_filters( "coe_am_disable_{$tax['name']}_tax", false, $tax ) ) {
+				continue;
+			}
+
+			/**
+			 * Filters whether or not to skip registration of the current iterated taxonomy.
+			 *
+			 * @since 1.7.0
+			 *
+			 * @param bool  $value Whether or not to skip the taxonomy.
+			 * @param array $tax   Current taxonomy being registered.
+			 */
+			if ( (bool) apply_filters( 'coe_am_disable_tax', false, $tax ) ) {
+				continue;
+			}
+
+			coe_am_register_single_taxonomy( $tax );
+		}
+	}
+
+	/**
+	 * Fires after the completion of the taxonomy registrations.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param array $taxes Array of taxonomies registered.
+	 */
+	do_action( 'coe_am_post_register_taxonomies', $taxes );
+}
+add_action( 'init', 'coe_am_create_custom_taxonomies', 9 );  // Leave on standard init for legacy purposes.
+
+/**
+ * Helper function to register the actual taxonomy.
+ *
+ * @since 1.0.0
+ *
+ * @internal
+ *
+ * @param array $taxonomy Taxonomy array to register. Optional.
+ * @return null Result of register_taxonomy.
+ */
+function coe_am_register_single_taxonomy( $taxonomy = array() ) {
+
+}

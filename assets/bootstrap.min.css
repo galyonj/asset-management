@@ -9484,3 +9484,11 @@ a.text-dark:hover {
 	}
 }
 /*# sourceMappingURL=bootstrap.min.css.map */
+
+.metadata-form .postbox .toggle-indicator:before {
+	content: "\f142";
+	display: inline-block;
+	font: normal 20px/1 dashicons;
+	speak: none;
+	text-decoration: none !important;
+}
