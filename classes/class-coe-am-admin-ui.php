@@ -106,7 +106,6 @@ class Coe_Am_Admin_UI {
 			array(
 				'field_desc'  => '',
 				'label_text'  => '',
-				'name_arr'    => '',
 				'name'        => '',
 				'placeholder' => '',
 				'required'    => false,
@@ -142,7 +141,7 @@ class Coe_Am_Admin_UI {
 		}
 
 		// And now we output the input itself.
-		$val .= '<input type="text" class="form-control form-control-sm" id="' . $args['name'] . '" name="' . $args['name_arr'] . '[' . $args['name'] . ']"';
+		$val .= '<input type="text" class="form-control form-control-sm" id="' . $args['name'] . '" name="' . $args['name'] . '"';
 
 		if ( $args['placeholder'] ) {
 			$val .= $this->make_placeholder( $args['placeholder'] );
@@ -191,10 +190,10 @@ class Coe_Am_Admin_UI {
 			$val .= $this->open_col_div();
 		}
 
-		$val .= '<select class="form-control" id="' . $args['name'] . '" name="' . $args['name_arr'] . '[' . $args['name'] . ']">';
+		$val .= '<select class="form-control" id="' . $args['name'] . '" name="' . $args['name'] . '">';
 
 		foreach ( $args['options'] as $opt ) {
-			$selected = ( isset( $opt['selected'] ) ) ? 'selected' : '';
+			$selected = ( isset( $opt['selected'] ) ) ? 'selected="selected"' : '';
 			$val     .= '<option value="' . $opt['value'] . '"' . $selected . '>' . $opt['text'] . '</option>';
 		}
 
@@ -236,7 +235,7 @@ class Coe_Am_Admin_UI {
 		}
 
 		// And now we output the input itself.
-		$val .= '<textarea class="form-control form-control-sm" id="' . $args['name'] . '" name="' . $args['name_arr'] . '[' . $args['name'] . ']"';
+		$val .= '<textarea class="form-control form-control-sm" id="' . $args['name'] . '" name="' . $args['name'] . '"';
 
 		if ( $args['placeholder'] ) {
 			$val .= $this->make_placeholder( $args['placeholder'] );

@@ -59,8 +59,8 @@ coe_am_define_constants( 'SLUG', dirname( plugin_basename( __FILE__ ) ) );
 coe_am_define_constants( 'NAME', $plugin_data['name'] );
 coe_am_define_constants( 'VERSION', $plugin_data['version'] );
 coe_am_define_constants( 'TEXT', $plugin_data['text'] );
-coe_am_define_constants( 'PREFIX', 'coe_asset_management' );
-coe_am_define_constants( 'SETTINGS', 'coe_asset_management' );
+coe_am_define_constants( 'PREFIX', 'coe_am_' );
+coe_am_define_constants( 'SETTINGS', 'coe_am_' );
 
 /**
  * A useful function that returns an array with the contents of plugin constants
@@ -126,6 +126,17 @@ require_once $_coe['path'] . 'classes/class-coe-am-admin-ui.php';
 require_once $_coe['path'] . 'inc/utils.php';
 require_once $_coe['path'] . 'inc/register-cpt.php';
 require_once $_coe['path'] . 'inc/metadata.php';
+
+/**
+ * Create a custom option to hold our taxonomy data for later
+ *
+ * @since 1.0.0
+ * @return mixed multidimensional array of taxonomy values
+ */
+function coe_am_add_tax_option( $arr = array() ) {
+	add_option( 'coe_am_metadata', array(), '', 'yes' );
+}
+add_action( 'plugins_loaded', 'coe_am_add_tax_option' );
 
 /**
  * Register our users' custom taxonomies.
@@ -203,6 +214,6 @@ add_action( 'init', 'coe_am_create_custom_taxonomies', 9 );  // Leave on standar
  * @param array $taxonomy Taxonomy array to register. Optional.
  * @return null Result of register_taxonomy.
  */
-function coe_am_register_single_taxonomy( $taxonomy = array() ) {
+function coe_am_register_metadata( $taxonomy = array() ) {
 
 }

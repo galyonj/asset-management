@@ -14,6 +14,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Fetch our taxonomy option
+ *
+ * @since 1.0.0
+ *
+ * @return mixed
+ */
+function coe_am_get_taxonomy_data() {
+	return apply_filters( 'coe_am_get_taxonomy_data', get_option( 'coe_am_metadata', array() ), get_current_blog_id() );
+}
+
+/**
  * Conditionally flushes rewrite rules if we have reason to.
  *
  * @since 1.3.0
@@ -60,8 +71,7 @@ function coe_am_admin_notices( $action = '', $object_type = '', $success = true,
 
 	$messagewrapstart = '<div id="message" class="' . implode( ' ', $class ) . '"><p>';
 	$message          = '';
-
-	$messagewrapend = '</p></div>';
+	$messagewrapend   = '</p></div>';
 
 	if ( 'add' === $action ) {
 		if ( $success ) {
@@ -110,4 +120,22 @@ function coe_am_admin_notices( $action = '', $object_type = '', $success = true,
 	}
 
 	return false;
+}
+
+/**
+ * Function to pluralize text provided via form
+ *
+ * @since 1.0.0
+ * @uses string $data
+ * @return string $pluralized
+ */
+function pluralize() {
+	/**
+	 * English is a silly language.
+	 *
+	 * 1. If the singular noun ends in 's', 'ss', 'sh', 'ch', 'x', or 'z', add 'es' to the end.
+	 * 2. If the word ends in '[vowel]+y', change to '[vowel]+ies' (ex cherry => cherries)
+	 * 3. If the word ends in '[vowel]+o', add 's' (ex pistachios)
+	 * 4. If the word ends in '[consonant]+o',
+	 */
 }
