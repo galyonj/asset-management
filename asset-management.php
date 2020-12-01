@@ -126,6 +126,7 @@ require_once $_coe['path'] . 'classes/class-coe-am-admin-ui.php';
 require_once $_coe['path'] . 'inc/utils.php';
 require_once $_coe['path'] . 'inc/register-cpt.php';
 require_once $_coe['path'] . 'inc/metadata.php';
+require_once $_coe['path'] . 'inc/metaboxes.php';
 
 /**
  * Create a custom option to hold our taxonomy data for later
@@ -133,10 +134,11 @@ require_once $_coe['path'] . 'inc/metadata.php';
  * @since 1.0.0
  * @return mixed multidimensional array of taxonomy values
  */
-function coe_am_add_tax_option( $arr = array() ) {
-	add_option( 'coe_am_metadata', array(), '', 'yes' );
-}
-add_action( 'plugins_loaded', 'coe_am_add_tax_option' );
+// function coe_am_add_tax_option( $arr = array() ) {
+// 	add_option( 'coe_am_metadata', array(), '', 'yes' );
+// 	delete_option( 'coe_am_metadata' );
+// }
+// add_action( 'plugins_loaded', 'coe_am_add_tax_option' );
 
 /**
  * Register our users' custom taxonomies.
@@ -146,22 +148,17 @@ add_action( 'plugins_loaded', 'coe_am_add_tax_option' );
  * @internal
  */
 function coe_am_create_custom_taxonomies() {
-	$taxes = get_option( 'coe_am_taxonomies' );
-
-	if ( empty( $taxes ) ) {
-		return;
-	}
+	$taxes = get_option( 'coe_am_metadata' );
 
 	/**
 	 * Fires before the start of the taxonomy registrations.
 	 *
-	 * @since 1.3.0
-	 *
+	 * @since 1.0.0
 	 * @param array $taxes Array of taxonomies to register.
 	 */
 	do_action( 'coe_am_pre_register_taxonomies', $taxes );
 
-	if ( is_array( $taxes ) ) {
+	if ( ! empty( $taxes ) && is_array( $taxes ) ) {
 		foreach ( $taxes as $tax ) {
 			/**
 			 * Filters whether or not to skip registration of the current iterated taxonomy.
@@ -191,29 +188,113 @@ function coe_am_create_custom_taxonomies() {
 
 			coe_am_register_single_taxonomy( $tax );
 		}
+	} else {
+		return;
 	}
 
 	/**
 	 * Fires after the completion of the taxonomy registrations.
 	 *
-	 * @since 1.3.0
-	 *
+	 * @since 1.0.0
 	 * @param array $taxes Array of taxonomies registered.
 	 */
 	do_action( 'coe_am_post_register_taxonomies', $taxes );
 }
 add_action( 'init', 'coe_am_create_custom_taxonomies', 9 );  // Leave on standard init for legacy purposes.
 
-/**
- * Helper function to register the actual taxonomy.
- *
- * @since 1.0.0
- *
- * @internal
- *
- * @param array $taxonomy Taxonomy array to register. Optional.
- * @return null Result of register_taxonomy.
- */
-function coe_am_register_metadata( $taxonomy = array() ) {
+function coe_am_register_single_taxonomy( $tax = array() ) {
+	$_coe         = coe_am_populate_constants();
+	$single       = $tax['labels']['singular_name'];
+	$name         = $tax['name'];
+	$plural       = $tax['labels']['name'];
+	$hierarchical = $tax['hierarchical'];
+	$description  = stripslashes_deep( $tax['description'] );
+	$meta_box_cb  = $tax['meta_box_cb'];
 
+	$labels = array(
+		'name'                       => $plural,
+		'singular_name'              => $single,
+		'search_items'               => sprintf( __( 'Search %s', $_coe['text'] ), $plural ),
+		'popular_items'              => sprintf( __( 'Popular %s', $_coe['text'] ), $plural ),
+		'all_items'                  => sprintf( __( 'All %s', $_coe['text'] ), $plural ),
+		'parent_item'                => sprintf( __( 'Parent %s', $_coe['text'] ), $single ),
+		'parent_item_colon'          => sprintf( __( 'Parent %s:', $_coe['text'] ), $single ),
+		'edit_item'                  => sprintf( __( 'Edit %s', $_coe['text'] ), $single ),
+		'view_item'                  => sprintf( __( 'View %s', $_coe['text'] ), $single ),
+		'update_item'                => sprintf( __( 'Update %s', $_coe['text'] ), $single ),
+		'add_new_item'               => sprintf( __( 'Add new %s', $_coe['text'] ), strtolower( $single ) ),
+		'new_item_name'              => sprintf( __( 'New %s Name', $_coe['text'] ), $single ),
+		'separate_items_with_commas' => sprintf( __( 'Separate %s with commas', $_coe['text'] ), strtolower( $plural ) ),
+		'add_or_remove_items'        => sprintf( __( 'Add or remove %s', $_coe['text'] ), strtolower( $plural ) ),
+		'choose_from_most_used'      => sprintf( __( 'Choose from the most used %s', $_coe['text'] ), strtolower( $plural ) ),
+		'not_found'                  => sprintf( __( 'No %s found', $_coe['text'] ), strtolower( $plural ) ),
+		'no_terms'                   => sprintf( __( 'No %s', $_coe['text'] ), strtolower( $plural ) ),
+		'items_list_navigation'      => sprintf( __( '%s list navigation', $_coe['text'] ), $plural ),
+		'items_list'                 => sprintf( __( '%s list', $_coe['text'] ), $plural ),
+		'most_used'                  => sprintf( __( 'Most Used %s', $_coe['text'] ), $plural ),
+		'back_to_items'              => sprintf( __( '← Back to %s', $_coe['text'] ), $plural ),
+		'menu_name'                  => $plural,
+		'new_item'                   => sprintf( __( 'New %s', $_coe['text'] ), $single ),
+		'view_items'                 => sprintf( __( 'View %s', $_coe['text'] ), $plural ),
+		'not_found_in_trash'         => sprintf( __( 'No %s found in trash', $_coe['text'] ), strtolower( $plural ) ),
+		'archives'                   => sprintf( __( '%s Archives', $_coe['text'] ), $single ),
+		'attributes'                 => sprintf( __( 'New %s', $_coe['text'] ), $single ),
+		'insert_into_item'           => sprintf( __( '%s Attributes', $_coe['text'] ), $single ),
+		'uploaded_to_this_item'      => sprintf( __( 'Uploaded to this %s', $_coe['text'] ), strtolower( $single ) ),
+		'archive_title'              => $plural,
+		'name_admin_bar'             => $single,
+	);
+
+	$args = array(
+		'labels'              => $labels,
+		'description'         => ( isset( $tax['description'] ) ) ? $tax['description'] : '',
+		'public'              => ( isset( $tax['public'] ) ) ? $tax['public'] : true,
+		'publicly_queryable'  => ( isset( $tax['publicly_queryable'] ) ) ? $tax['publicly_queryable'] : true,
+		'exclude_from_search' => ( isset( $tax['exclude_from_search'] ) ) ? $tax['exclude_from_search'] : false,
+		'show_admin_column'   => ( isset( $tax['show_admin_column'] ) ) ? $tax['show_admin_column'] : true,
+		'show_ui'             => ( isset( $tax['show_ui'] ) ) ? $tax['show_ui'] : true,
+		'show_in_menu'        => ( isset( $tax['show_in_menu'] ) ) ? $tax['show_in_menu'] : true,
+		'query_var'           => ( isset( $tax['query_var'] ) ) ? $tax['query_var'] : true,
+		'show_in_admin_bar'   => ( isset( $admin ) ) ? $admin : true,
+		'capability_type'     => ( isset( $tax['capability_type'] ) ) ? $tax['capability_type'] : 'post',
+		'has_archive'         => ( isset( $tax['has_archive'] ) ) ? $tax['has_archive'] : true,
+		'hierarchical'        => ( isset( $hierarchical ) ) ? $hierarchical : true,
+		'rewrite'             => ( isset( $tax['rewrite'] ) ) ? $tax['rewrite'] : array(
+			'slug'         => ( isset( $tax['rewrite']['slug'] ) ) ? $tax['rewrite']['slug'] : $name,
+			'with_front'   => ( isset( $tax['rewrite']['with_front'] ) ) ? $tax['rewrite']['with_front'] : true,
+			'hierarchical' => ( isset( $tax['rewrite']['hierarchical'] ) ) ? $tax['rewrite']['hierarchical'] : false,
+		),
+		'supports'            => ( isset( $tax['supports'] ) ) ? $tax['supports'] : array(
+			'title',
+			'editor',
+			'excerpt',
+			'thumbnail',
+			'revisions',
+			'page-attributes',
+			'post-formats',
+		),
+		'show_in_rest'        => ( isset( $tax['show_in_rest'] ) ) ? $tax['show_in_rest'] : true,
+		'menu_position'       => ( isset( $tax['menu_position'] ) ) ? $tax['menu_position'] : 21,
+		'menu_icon'           => ( isset( $tax['menu_icon'] ) ) ? $tax['menu_icon'] : 'dashicons-admin-generic',
+		'show_in_nav_menus'   => ( isset( $tax['show_in_nav_menus'] ) ) ? $tax['show_in_nav_menus'] : true,
+		'meta_box_cb'         => $meta_box_cb,
+	);
+
+	$object_type = ! empty( $tax['object_types'] ) ? $tax['object_types'] : 'asset';
+
+	/**
+	 * Filters the arguments used for a taxonomy right before registering.
+	 *
+	 * @since 1.0.0
+	 * @since 1.3.0 Added original passed in values array
+	 * @since 1.6.0 Added $obect_type variable to passed parameters.
+	 *
+	 * @param array  $args        Array of arguments to use for registering taxonomy.
+	 * @param string $value       Taxonomy slug to be registered.
+	 * @param array  $taxonomy    Original passed in values for taxonomy.
+	 * @param array  $object_type Array of chosen post types for the taxonomy.
+	 */
+	//$args = apply_filters( 'cptui_pre_register_taxonomy', $args, $tax['name'], $tax, $object_type );
+
+	return register_taxonomy( $tax['name'], $object_type, $args );
 }

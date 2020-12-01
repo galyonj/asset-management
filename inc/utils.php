@@ -21,13 +21,22 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return mixed
  */
 function coe_am_get_taxonomy_data() {
-	return apply_filters( 'coe_am_get_taxonomy_data', get_option( 'coe_am_metadata', array() ), get_current_blog_id() );
+	return apply_filters( 'coe_am_get_taxonomy_data', get_option( 'coe_am_metadata', array() ) );
 }
 
 /**
- * Conditionally flushes rewrite rules if we have reason to.
+ * Flush_rewrite_rules is an expensive operation, and we don't want to perform it any more than we absolutely
+ * have to. However...our plugin makes both a custom post type and creates a framework by which we can
+ * later perform CRUD operations on taxonomies related to that post type, we're going to have to flush
+ * the WordPress rewrite rules.
  *
- * @since 1.3.0
+ * This function looks for a short-lived transient that will be created during the CRUD process for our post type
+ * or any of our taxonomies. If that transient is found, we do a soft flush of the rewrite rules upon activation
+ * of any of the CRUD operations performed by our plugin.
+ *
+ * @since 1.0.0
+ * @link https://developer.wordpress.org/reference/functions/flush_rewrite_rules/
+ * @link https://developer.wordpress.org/reference/functions/get_transient/
  */
 function coe_am_flush_rewrite_rules() {
 
@@ -36,12 +45,7 @@ function coe_am_flush_rewrite_rules() {
 	}
 
 	/*
-	 * Wise men say that you should not do flush_rewrite_rules on init or admin_init. Due to the nature of our plugin
-	 * and how new post types or taxonomies can suddenly be introduced, we need to...potentially. For this,
-	 * we rely on a short lived transient. Only 5 minutes life span. If it exists, we do a soft flush before
-	 * deleting the transient to prevent subsequent flushes. The only times the transient gets created, is if
-	 * post types or taxonomies are created, updated, deleted, or imported. Any other time and this condition
-	 * should not be met.
+	 *
 	 */
 	if ( 'true' === ( $flush_it = get_transient( 'coe_am_flush_rewrite_rules' ) ) ) {
 		flush_rewrite_rules( false );
@@ -120,22 +124,4 @@ function coe_am_admin_notices( $action = '', $object_type = '', $success = true,
 	}
 
 	return false;
-}
-
-/**
- * Function to pluralize text provided via form
- *
- * @since 1.0.0
- * @uses string $data
- * @return string $pluralized
- */
-function pluralize() {
-	/**
-	 * English is a silly language.
-	 *
-	 * 1. If the singular noun ends in 's', 'ss', 'sh', 'ch', 'x', or 'z', add 'es' to the end.
-	 * 2. If the word ends in '[vowel]+y', change to '[vowel]+ies' (ex cherry => cherries)
-	 * 3. If the word ends in '[vowel]+o', add 's' (ex pistachios)
-	 * 4. If the word ends in '[consonant]+o',
-	 */
 }
