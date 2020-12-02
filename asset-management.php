@@ -2,13 +2,13 @@
 
 /**
  * @link              https://github.com/galyonj
- * @since             1.0.0
+ * @since             1.0.1
  * @package           Coe_Am
  *
  * Plugin Name:       Asset Management
  * Plugin URI:        https://github.com/galyonj/coe-asset-management
  * Description:       Create an Assets custom post type and provide tools for managing Assets taxonomy and metadata.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            John Galyon
  * Author URI:        https://github.com/galyonj
  * License:           GPL-2.0+
