@@ -63,25 +63,21 @@ function coe_am_metadata_html() {
 			'url'      => esc_url( add_query_arg( array( 'action' => 'create' ) ), $page_path ),
 			'selected' => false,
 		);
-		// $tabs['view']   = array(
-		// 	'action'   => 'view',
-		// 	'text'     => esc_html__( 'View Metadata Terms', $_coe['text'] ),
-		// 	'classes'  => $classes,
-		// 	'url'      => esc_url( add_query_arg( array( 'action' => 'view' ) ), $page_path ),
-		// 	'selected' => 'false',
-		// );
-		// $tabs['import'] = array(
-		// 	'action'   => 'import',
-		// 	'text'     => esc_html__( 'Import/Export Metadata', $_coe['text'] ),
-		// 	'classes'  => $classes,
-		// 	'url'      => esc_url( add_query_arg( array( 'action' => 'import' ) ), $page_path ),
-		// 	'selected' => 'false',
-		// );
+		$tabs['view']   = array(
+			'action'   => 'view',
+			'text'     => esc_html__( 'View Metadata Terms', $_coe['text'] ),
+			'classes'  => $classes,
+			'url'      => esc_url( add_query_arg( array( 'action' => 'view' ) ), $page_path ),
+			'selected' => 'false',
+		);
+		$tabs['import'] = array(
+			'action'   => 'import',
+			'text'     => esc_html__( 'Import/Export Metadata', $_coe['text'] ),
+			'classes'  => $classes,
+			'url'      => esc_url( add_query_arg( array( 'action' => 'import' ) ), $page_path ),
+			'selected' => 'false',
+		);
 	}
-
-	// if ( ! empty( $taxonomies ) ) {
-	// 	$tabs[]
-	// }
 	?>
 <div class="wrap">
 	<h1><?php echo get_admin_page_title(); ?></h1>
@@ -104,7 +100,8 @@ function coe_am_metadata_html() {
 	<?php
 	switch ( $action ) {
 		case 'edit':
-			coe_am_display_edit_metadata();
+			//coe_am_display_edit_metadata();
+			echo '<p style="margin-top: 20px;">The ability to edit and delete metadata is coming soon.</p>';
 			break;
 		case 'view':
 			coe_am_display_view();
@@ -255,15 +252,7 @@ function coe_am_display_add_metadata( $tab = 'new' ) {
 			</div> <!-- #poststuff -->
 		</div> <!-- postbox-container -->
 	</form>
-	<div class="output" style="float: right; width: 50%;">
-		<?php
-		$taxes = get_option( 'coe_am_metadata' );
 
-		echo '<hr>';
-		echo '<pre style="font-size: 12px;">';
-		print_r( $taxes );
-		?>
-	</div>
 	<?php
 }
 
@@ -329,15 +318,15 @@ function coe_am_display_edit_metadata( $tab = 'edit' ) {
 		</div> <!-- postbox-container -->
 	</form>
 	<?php
-	echo '<pre>';
-	print_r( $taxes );
-	echo '</pre>';
+	// echo '<pre>';
+	// print_r( $taxes );
+	// echo '</pre>';
 }
 
 function coe_am_display_view() {
 	$_coe = coe_am_populate_constants();
 	?>
-	<p style="margin-top: 20px;">Edit existing metadata term settings is coming soon.</p>
+	<p style="margin-top: 20px;">The ability to view metadata/term relationships is coming soon.</p>
 	<?php
 }
 
@@ -637,10 +626,10 @@ function coe_am_handle_metadata() {
 		$result = '';
 
 		if ( isset( $_POST['coe_am_delete'] ) ) {
-			check_admin_referrer( 'coe_am_editdelete_metadata_nonce_action', 'coe_am_editdelete_metadata_nonce_field' );
+			check_admin_referer( 'coe_am_editdelete_metadata_nonce_action', 'coe_am_editdelete_metadata_nonce_field' );
 			$result = coe_am_delete_metadata( $_POST );
 		} else {
-			check_admin_referrer( 'coe_am_addedit_metadata_nonce_action', 'coe_am_addedit_metadata_nonce_field' );
+			check_admin_referer( 'coe_am_add_metadata_nonce_action', 'coe_am_add_metadata_nonce_field' );
 			$result = coe_am_process_metadata( $_POST );
 		}
 

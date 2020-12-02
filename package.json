@@ -1,8 +1,8 @@
 {
-	"name": "your-project",
-	"description": "A WPGulp based project.",
+	"name": "asset-management",
+	"description": "WordPress plugin that facilitates digital asset management.",
 	"version": "0.0.1",
-	"repository": "ahmadawais/WPGulp",
+	"repository": "galyonj/asset-management",
 	"license": "MIT",
 	"devDependencies": {
 		"@babel/core": "^7.0.0",
