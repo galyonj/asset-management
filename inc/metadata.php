@@ -31,9 +31,10 @@ function coe_am_metadata_html() {
 	$tabs       = array();
 
 	$tabs['add'] = array(
+		'action'   => 'add',
 		'text'     => esc_html__( 'Add New Metadata', $_coe['text'] ),
 		'classes'  => $classes,
-		'url'      => esc_url( $page_path ),
+		'url'      => esc_url( add_query_arg( array( 'action' => 'add' ) ), $page_path ),
 		'selected' => 'false',
 	);
 
@@ -56,11 +57,11 @@ function coe_am_metadata_html() {
 			'url'      => esc_url( add_query_arg( array( 'action' => 'edit' ) ), $page_path ),
 			'selected' => 'false',
 		);
-		$tabs['create'] = array(
-			'action'   => 'create',
+		$tabs['build']  = array(
+			'action'   => 'build',
 			'text'     => esc_html__( 'Shortcode Builder', $_coe['text'] ),
 			'classes'  => $classes,
-			'url'      => esc_url( add_query_arg( array( 'action' => 'create' ) ), $page_path ),
+			'url'      => esc_url( add_query_arg( array( 'action' => 'build' ) ), $page_path ),
 			'selected' => false,
 		);
 		$tabs['view']   = array(
@@ -82,17 +83,15 @@ function coe_am_metadata_html() {
 <div class="wrap">
 	<h1><?php echo get_admin_page_title(); ?></h1>
 	<nav class="nav-tab-wrapper wp-clearfix" aria-label="Secondary Menu">
-		<!-- <a href="<?php echo $page_path; ?>" class="nav-tab nav-tab-active" aria-selected="true">Add New Metadata</a> -->
-		<!-- <?php foreach ( $tabs as $tab ) : ?>
-		<a href="<?php echo $tab['url']; ?>" class="<?php echo implode( ' ', $tab['classes'] ); ?>"><?php echo $tab['text']; ?></a>
-		<?php endforeach; ?> -->
 		<?php
 		foreach ( $tabs as $tab ) {
 			$current_tab = current( $tab );
 			if ( $current_tab === $action ) {
 				$tab['classes'][] = 'nav-tab-active';
+				$tab['selected']  = 'true';
 			}
-			echo '<a href="' . $tab['url'] . '" class="' . implode( ' ', $tab['classes'] ) . '" aria-selected="' . $tab['selected'] . '">' . $tab['text'] . '</a>';
+			echo sprintf( $format, $tab['url'], implode( ' ', $tab['classes'] ), $tab['selected'], $tab['text'] );
+			//echo '<a href="' . $tab['url'] . '" class="' . implode( ' ', $tab['classes'] ) . '" aria-selected="' . $tab['selected'] . '">' . $tab['text'] . '</a>';
 		}
 		?>
 	</nav>
@@ -100,8 +99,7 @@ function coe_am_metadata_html() {
 	<?php
 	switch ( $action ) {
 		case 'edit':
-			//coe_am_display_edit_metadata();
-			echo '<p style="margin-top: 20px;">The ability to edit and delete metadata is coming soon.</p>';
+			coe_am_display_edit_metadata( $tab );
 			break;
 		case 'view':
 			coe_am_display_view();
@@ -118,6 +116,20 @@ function coe_am_metadata_html() {
 			break;
 	}
 	?>
+		<div class="debug" style="float: left; padding-top: 10px; margin-left: 20px;">
+			<?php echo $action; ?>
+			<hr>
+			<pre>
+			<?php
+			if ( 'edit' === $action ) {
+				//print_r( $_POST );
+				//print_r( get_terms( 'rods', array( 'hide_empty' => false ) ) );
+			} else {
+				print_r( get_option( 'coe_am_metadata' ) );
+			}
+			?>
+			</pre>
+		</div>
 	</div>
 </div>
 	<?php
@@ -241,7 +253,7 @@ function coe_am_display_add_metadata( $tab = 'new' ) {
 								<input type="hidden" name="coe_am_post_types" value="asset">
 								<input type="hidden" name="action" value="coe_am_handle_metadata">
 								<input type="hidden" name="coe_status" id="coe_status" value="<?php echo esc_attr( $tab ); ?>" />
-								<input type="submit" class="button-primary" name="coe_am_submit" value="<?php echo esc_attr__( 'Create Metadata', $_coe['text'] ); ?>" />
+								<input type="submit" class="coe-am-add button button-primary" name="coe_am_submit" value="<?php echo esc_attr__( 'Create Metadata', $_coe['text'] ); ?>" />
 								<?php if ( ! empty( $current ) ) : ?>
 									<input type="hidden" name="tax_original" id="tax_original" value="<?php echo esc_attr( $current['name'] ); ?>" />
 								<?php endif; ?>
@@ -269,11 +281,11 @@ function coe_am_display_edit_metadata( $tab = 'edit' ) {
 				<div class="postbox edit-metadata">
 					<div class="postbox-header">
 						<h2 class="hndle ui-sortable-handle">
-							<span><?php esc_html_e( 'Edit Metadata Settings', $_coe['text'] ); ?></span>
+							<span><?php esc_html_e( 'Select Metadata', $_coe['text'] ); ?></span>
 						</h2>
 						<div class="handle-actions hide-if-no-js">
 							<button type="button" class="handlediv" aria-expanded="true">
-								<span class="screen-reader-text"><?php esc_html_e( 'Toggle panel: Basic settings', $_coe['text'] ); ?></span>
+								<span class="screen-reader-text"><?php esc_html_e( 'Toggle panel: Select metadata', $_coe['text'] ); ?></span>
 								<span class="toggle-indicator" aria-hidden="true"></span>
 							</button> <!-- handlediv -->
 						</div> <!-- handle-actions -->
@@ -292,7 +304,7 @@ function coe_am_display_edit_metadata( $tab = 'edit' ) {
 									'additional_text' => '',
 									'field_desc'      => __( 'Select the metadata term you wish to edit.', $_coe['text'] ),
 									'label_text'      => __( 'Select Metadata', $_coe['text'] ),
-									'name'            => 'hierarchical',
+									'name'            => 'select_metadata',
 									'wrap'            => true,
 									'options'         => $options,
 								)
@@ -303,9 +315,8 @@ function coe_am_display_edit_metadata( $tab = 'edit' ) {
 								<p style="margin-bottom: 0;">
 									<input type="hidden" name="coe_am_post_types" value="asset">
 									<input type="hidden" name="action" value="coe_am_handle_metadata">
-									<input type="hidden" name="coe_status" id="coe_status" value="<?php echo esc_attr( $tab ); ?>" />
-									<input type="submit" class="button button-primary" name="coe_am_edit" value="<?php echo esc_attr__( 'Edit Metadata', $_coe['text'] ); ?>" />
-									<input type="submit" class="button button-secondary" name="coe_am_delete" value=<?php echo esc_attr__( 'Delete Metadata', $_coe['text'] ); ?>>
+									<input type="submit" class="coe-am-edit button button-primary" name="coe_am_edit" value="<?php echo esc_attr__( 'Edit Metadata', $_coe['text'] ); ?>" />
+									<input type="submit" class="coe-am-delete button button-secondary" name="coe_am_delete" value="<?php echo esc_attr__( 'Delete Metadata', $_coe['text'] ); ?>" />
 									<?php if ( ! empty( $current ) ) : ?>
 										<input type="hidden" name="tax_original" id="tax_original" value="<?php echo esc_attr( $current['name'] ); ?>" />
 									<?php endif; ?>
@@ -314,6 +325,129 @@ function coe_am_display_edit_metadata( $tab = 'edit' ) {
 						</div> <!-- main -->
 					</div> <!-- inside -->
 				</div><!-- postbox.edit-metadata -->
+				<div class="postbox edit-metadata-basic">
+					<div class="postbox-header">
+						<h2 class="hndle ui-sortable-handle">
+							<span><?php esc_html_e( 'Basic Settings', $_coe['text'] ); ?></span>
+						</h2>
+						<div class="handle-actions hide-if-no-js">
+							<button class="handlediv">
+								<span class="screen-reader-text"><?php esc_html_e( 'Toggle panel: Basic settings', $_coe['text'] ); ?></span>
+								<span class="toggle-indicator" aria-hidden="true"></span>
+							</button>
+						</div>
+					</div> <!-- header -->
+					<div class="inside">
+						<div class="main">
+						<?php
+						echo $ui->make_text_input(
+							array(
+								'additional_text' => '',
+								'field_desc'      => __( 'Please use only alphanumeric characters and spaces.', $_coe['text'] ),
+								'label_text'      => __( 'Name', $_coe['text'] ),
+								'maxlength'       => 32,
+								'name'            => 'single_name',
+								'placeholder'     => __( '(e.g. Region)', $_coe['text'] ),
+								'required'        => false,
+								'textvalue'       => '',
+								'wrap'            => true,
+							)
+						);
+						?>
+						<?php
+						echo $ui->make_text_input(
+							array(
+								'additional_text' => '',
+								'field_desc'      => __( 'Please use only alphanumeric characters and spaces.', $_coe['text'] ),
+								'label_text'      => __( 'Plural Name', $_coe['text'] ),
+								'maxlength'       => 32,
+								'name'            => 'plural_name',
+								'placeholder'     => __( '(e.g. Regions)', $_coe['text'] ),
+								'required'        => false,
+								'textvalue'       => '',
+								'wrap'            => true,
+							)
+						);
+						?>
+						<?php
+						$options = array(
+							array(
+								'value'    => '0',
+								'text'     => __( 'No', $_coe['text'] ),
+								'selected' => 'selected',
+							),
+							array(
+								'value' => '1',
+								'text'  => __( 'Yes', $_coe['text'] ),
+							),
+						);
+						echo $ui->make_select_input(
+							array(
+								'additional_text' => '',
+								'field_desc'      => __( 'Choose whether you wish to be able to assign multiple terms to an asset.', $_coe['text'] ),
+								'label_text'      => __( 'Assign Multiple Values', $_coe['text'] ),
+								'name'            => 'assign_multiple',
+								'wrap'            => true,
+								'options'         => $options,
+							)
+						);
+						?>
+						<?php
+						$options = array(
+							array(
+								'value'    => 'false',
+								'text'     => __( 'No', $_coe['text'] ),
+								'selected' => 'selected',
+							),
+							array(
+								'value' => 'true',
+								'text'  => __( 'Yes', $_coe['text'] ),
+							),
+						);
+						echo $ui->make_select_input(
+							array(
+								'additional_text' => '',
+								'field_desc'      => __( 'Choose whether you wish for the values to be hierarchical in nature.', $_coe['text'] ),
+								'label_text'      => __( 'Hierarchical Values', $_coe['text'] ),
+								'name'            => 'hierarchical',
+								'wrap'            => true,
+								'options'         => $options,
+							)
+						);
+						?>
+						<?php
+						echo $ui->make_textarea(
+							array(
+								'additional_text' => '',
+								'field_desc'      => __( '(Optional) Enter a short, text-only description for your metadata.', $_coe['text'] ),
+								'label_text'      => __( 'Description', $_coe['text'] ),
+								'name'            => 'description',
+								'wrap'            => true,
+								'rows'            => 3,
+								'cols'            => '',
+							)
+						)
+						?>
+						</div>
+					</div>
+				</div> <!-- basic-settings -->
+				<div class="postbox edit-metadata-advanced">
+					<div class="postbox-header">
+						<h2 class="hndle ui-sortable-handle">
+							<span><?php esc_html_e( 'Advanced Settings', $_coe['text'] ); ?></span>
+						</h2>
+						<div class="handle-actions hide-if-no-js">
+							<button class="handlediv" aria-expanded="true" type="button">
+								<span class="screen-reader-text"><?php esc_html_e( 'Toggle panel: Advanced settings', $_coe['text'] ); ?></span>
+								<span class="toggle-indicator" aria-hidden="true"></span>
+							</button>
+						</div>
+					</div> <!--header -->
+					<div class="inside">
+						<div class="main">
+						</div>
+					</div>
+				</div> <!-- advanced settings -->
 			</div> <!-- #poststuff -->
 		</div> <!-- postbox-container -->
 	</form>
@@ -344,6 +478,127 @@ function coe_am_display_import() {
 	<?php
 }
 
+/**
+ * Check the referrer and $_POST data from the form
+ * and, if everything's okay, send the $_POST data
+ * out for processing.
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function coe_am_handle_metadata() {
+	if ( wp_doing_ajax() || ! is_admin() ) {
+		return;
+	}
+
+	if ( ! empty( $_GET ) && isset( $_GET['page'] ) && 'metadata' !== $_GET['page'] ) {
+		return;
+	}
+
+	if ( ! empty( $_POST ) ) {
+		$result = '';
+
+		if ( isset( $_POST['coe_am_delete'] ) || isset( $_POST['coe_am_edit'] ) ) {
+			check_admin_referer( 'coe_am_editdelete_metadata_nonce_action', 'coe_am_editdelete_metadata_nonce_field' );
+			if ( isset( $_POST['coe_am_delete'] ) ) {
+				$result = coe_am_delete_metadata( $_POST );
+			} else {
+				$result = coe_am_process_metadata( $_POST );
+			}
+		} else {
+			check_admin_referer( 'coe_am_add_metadata_nonce_action', 'coe_am_add_metadata_nonce_field' );
+			$result = coe_am_process_metadata( $_POST );
+		}
+
+		if ( isset( $_POST['coe_am_delete'] ) && empty( coe_am_get_metadata_slugs() ) ) {
+			wp_safe_redirect( admin_url( 'edit.php?post_type=asset&page=metadata' ) );
+		}
+	}
+}
+add_action( 'init', 'coe_am_handle_metadata', 8 );
+
+function coe_am_delete_metadata( $data = array() ) {
+
+	// Check if they selected one to delete.
+	if ( empty( $data['select_metadata'] ) ) {
+		return cptui_admin_notices( 'error', '', false, esc_html__( 'Please provide a taxonomy to delete', 'custom-post-type-ui' ) );
+	}
+
+	/**
+	 * Fires before a taxonomy is deleted from our saved options.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $data Array of taxonomy data we are deleting.
+	 */
+	do_action( 'coe_am_before_delete_metadata', $data );
+
+	$taxonomies = coe_am_get_saved_metadata();
+
+	if ( array_key_exists( strtolower( $data['select_metadata'] ), $taxonomies ) ) {
+
+		/**
+		 * If 'delete_terms' is set as part of the $_POST request
+		 * we delete the terms before we delete the taxonomy term
+		 * itself.
+		 *
+		 * @since 1.0.0
+		 * @uses array $data array of $_POST request options
+		 * @uses get_terms function to get terms for a named taxonomy
+		 * @uses wp_delete_term function to delete a term for a specific taxonomy
+		*/
+		if ( isset( $data['delete_terms'] ) ) {
+			$terms = get_terms(
+				$data['select_metadata'],
+				array(
+					'fields'     => 'ids',
+					'hide_empty' => false,
+				)
+			);
+
+			// This can be sped up by swapping wp_delete_term with a
+			// prepared wpdb query
+			foreach ( $terms as $term ) {
+				wp_delete_term( $term, $data['select_metadata'] );
+			}
+		}
+
+		unset( $taxonomies[ $data['select_metadata'] ] );
+
+		/**
+		 * Filters whether or not 3rd party options were saved successfully within taxonomy deletion.
+		 *
+		 * @since 1.3.0
+		 *
+		 * @param bool  $value      Whether or not someone else saved successfully. Default false.
+		 * @param array $taxonomies Array of our updated taxonomies data.
+		 * @param array $data       Array of submitted taxonomy to update.
+		 */
+		if ( false === ( $success = apply_filters( 'coe_am_delete_metadata', false, $taxonomies, $data ) ) ) {
+			$success = update_option( 'coe_am_metadata', $taxonomies );
+		}
+	}
+	delete_option( "default_term_{$data['select_metadata']}" );
+
+	/**
+	 * Fires after a taxonomy is deleted from our saved options.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $data Array of taxonomy data that was deleted.
+	 */
+	do_action( 'coe_am_after_delete_metadata', $data );
+
+	// Used to help flush rewrite rules on init.
+	set_transient( 'cptui_flush_rewrite_rules', 'true', 5 * 60 );
+
+	if ( isset( $success ) ) {
+		return 'delete_success';
+	}
+	return 'delete_fail';
+
+}
+
 function coe_am_process_metadata( $data = array() ) {
 	$_coe = coe_am_populate_constants();
 
@@ -368,7 +623,7 @@ function coe_am_process_metadata( $data = array() ) {
 	$description  = stripslashes_deep( $data['description'] );
 	$tax_name     = strtolower( $single );
 	$meta_box_cb  = '';
-	$taxonomies   = coe_am_get_taxonomy_data();
+	$taxonomies   = coe_am_get_metadata_slugs();
 
 	// Maybe a little harsh, but we shouldn't be saving THAT frequently.
 	// delete_option( "default_term_{$name}" );
@@ -461,6 +716,7 @@ function coe_am_process_metadata( $data = array() ) {
 		'show_in_menu'        => ( isset( $data['show_in_menu'] ) ) ? $data['show_in_menu'] : true,
 		'show_in_nav_menus'   => ( isset( $data['show_in_nav_menus'] ) ) ? $data['show_in_nav_menus'] : true,
 		'show_in_rest'        => ( isset( $data['show_in_rest'] ) ) ? $data['show_in_rest'] : true,
+		'rest_base'           => ( isset( $data['rest_base'] ) ) ? $data['rest_base'] : strtolower( $plural ),
 		'show_ui'             => ( isset( $data['show_ui'] ) ) ? $data['show_ui'] : true,
 		'supports'            => ( isset( $data['supports'] ) ) ? $data['supports'] : array(
 			'title',
@@ -603,113 +859,4 @@ function coe_am_reserved_taxonomies() {
 	}
 
 	return $reserved;
-}
-
-/**
- * Check the referrer and $_POST data from the form
- * and, if everything's okay, send the $_POST data
- * out for processing.
- *
- * @since 1.0.0
- * @return void
- */
-function coe_am_handle_metadata() {
-	if ( wp_doing_ajax() || ! is_admin() ) {
-		return;
-	}
-
-	if ( ! empty( $_GET ) && isset( $_GET['page'] ) && 'metadata' !== $_GET['page'] ) {
-		return;
-	}
-
-	if ( ! empty( $_POST ) ) {
-		$result = '';
-
-		if ( isset( $_POST['coe_am_delete'] ) ) {
-			check_admin_referer( 'coe_am_editdelete_metadata_nonce_action', 'coe_am_editdelete_metadata_nonce_field' );
-			$result = coe_am_delete_metadata( $_POST );
-		} else {
-			check_admin_referer( 'coe_am_add_metadata_nonce_action', 'coe_am_add_metadata_nonce_field' );
-			$result = coe_am_process_metadata( $_POST );
-		}
-
-		if ( isset( $_POST['coe_am_delete'] ) && empty( coe_am_get_metadata_slug() ) ) {
-			wp_safe_redirect( admin_url( $page_path ) );
-		}
-	}
-}
-add_action( 'init', 'coe_am_handle_metadata', 8 );
-
-/**
- * Delete our custom taxonomy from the array of taxonomies.
- *
- * @since 1.0.0
- *
- * @internal
- *
- * @param array $data The $_POST values. Optional.
- * @return bool|string False on failure, string on success.
- */
-function coe_am_delete_taxonomy( $data = array() ) {
-	$_coe = coe_am_populate_constants();
-
-	if ( is_string( $data ) && taxonomy_exists( $data ) ) {
-		$data = array(
-			'cpt_custom_tax' => array(
-				'name' => $data,
-			),
-		);
-	}
-
-	// Check if they selected one to delete.
-	if ( empty( $data['cpt_custom_tax']['name'] ) ) {
-		return coe_am_admin_notices( 'error', '', false, esc_html__( 'Please provide a taxonomy to delete', $_coe['text'] ) );
-	}
-
-	/**
-	 * Fires before a taxonomy is deleted from our saved options.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array $data Array of taxonomy data we are deleting.
-	 */
-	do_action( 'coe_am_before_delete_taxonomy', $data );
-
-	$taxonomies = coe_am_get_taxonomy_data();
-
-	if ( array_key_exists( strtolower( $data['name'] ), $taxonomies ) ) {
-
-		unset( $taxonomies[ $data['name'] ] );
-
-		/**
-		 * Filters whether or not 3rd party options were saved successfully within taxonomy deletion.
-		 *
-		 * @since 1.3.0
-		 *
-		 * @param bool  $value      Whether or not someone else saved successfully. Default false.
-		 * @param array $taxonomies Array of our updated taxonomies data.
-		 * @param array $data       Array of submitted taxonomy to update.
-		 */
-		if ( false === ( $success = apply_filters( 'coe_am_taxonomy_delete_tax', false, $taxonomies, $data ) ) ) {
-			$success = update_option( 'coe_am_taxonomies', $taxonomies );
-		}
-	}
-	delete_option( "default_term_{$data['name']}" );
-
-	/**
-	 * Fires after a taxonomy is deleted from our saved options.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array $data Array of taxonomy data that was deleted.
-	 */
-	do_action( 'coe_am_after_delete_taxonomy', $data );
-
-	// Used to help flush rewrite rules on init.
-	set_transient( 'coe_am_flush_rewrite_rules', 'true', 5 * 60 );
-
-	if ( isset( $success ) ) {
-		return 'delete_success';
-	}
-	return 'delete_fail';
 }

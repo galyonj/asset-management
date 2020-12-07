@@ -48,8 +48,9 @@ class Coe_Am_Admin_UI {
 	 * @since 1.0.0
 	 * @return string opening div.col
 	 */
-	public function open_col_div() {
-		return '<div class="col-sm-9">';
+	public function open_col_div( $offset = false ) {
+		$offset = ( filter_var( $offset, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE ) ) ? ' offset-sm-3' : '';
+		return '<div class="col-sm-9' . $offset . '">';
 	}
 
 	/**
@@ -75,15 +76,15 @@ class Coe_Am_Admin_UI {
 	}
 
 	public function make_description( $name = '', $help_text = '', $additional_text = '' ) {
-		$text  = '<span class="' . $name . '-help form-text text-muted" style="font-style: italic;';
-		$text .= ( $additional_text ) ? ' margin-bottom: 10px;">' : '">';
-		$text .= $help_text . '</span>';
+		$desc  = '<span class="' . $name . '-help form-text text-muted" style="font-style: italic; width: 100%;';
+		$desc .= ( $additional_text ) ? ' margin-bottom: 10px;">' : '">';
+		$desc .= $help_text . '</span>';
 
 		if ( $additional_text ) {
-			$text .= '<span class="' . $name . '-additional-text">' . $additional_text . '</span>';
+			$desc .= '<span class="' . $name . '-additional-text">' . $additional_text . '</span>';
 		}
 
-		return $text;
+		return $desc;
 	}
 
 	public function make_placeholder( $placeholder = '' ) {
@@ -111,6 +112,7 @@ class Coe_Am_Admin_UI {
 				'required'    => false,
 				'textvalue'   => '',
 				'wrap'        => true,
+				'offset'      => false,
 			),
 			(array) $additions
 		);
@@ -128,6 +130,7 @@ class Coe_Am_Admin_UI {
 			array(
 				'maxlength' => '',
 				'onblur'    => '',
+				'value'     => '',
 			)
 		);
 
@@ -137,7 +140,7 @@ class Coe_Am_Admin_UI {
 		if ( $args['wrap'] ) {
 			$val .= $this->open_row_div();
 			$val .= $this->make_label( $args['name'], $args['label_text'], $args['required'] );
-			$val .= $this->open_col_div();
+			$val .= $this->open_col_div( $args['offset'] );
 		}
 
 		// And now we output the input itself.
@@ -187,10 +190,10 @@ class Coe_Am_Admin_UI {
 		if ( $args['wrap'] ) {
 			$val .= $this->open_row_div();
 			$val .= $this->make_label( $args['name'], $args['label_text'], $args['required'] );
-			$val .= $this->open_col_div();
+			$val .= $this->open_col_div( $args['offset'] );
 		}
 
-		$val .= '<select class="form-control" id="' . $args['name'] . '" name="' . $args['name'] . '">';
+		$val .= '<select class="form-control form-control-sm" id="' . $args['name'] . '" name="' . $args['name'] . '">';
 
 		foreach ( $args['options'] as $opt ) {
 			$selected = ( isset( $opt['selected'] ) ) ? 'selected="selected"' : '';
@@ -231,7 +234,7 @@ class Coe_Am_Admin_UI {
 		if ( $args['wrap'] ) {
 			$val .= $this->open_row_div();
 			$val .= $this->make_label( $args['name'], $args['label_text'], $args['required'] );
-			$val .= $this->open_col_div();
+			$val .= $this->open_col_div( $args['offset'] );
 		}
 
 		// And now we output the input itself.
@@ -254,6 +257,37 @@ class Coe_Am_Admin_UI {
 		}
 
 		$val .= '/></textarea>';
+
+		if ( $args['field_desc'] ) {
+			$val .= $this->make_description( $args['name'], $args['field_desc'], $args['additional_text'] );
+		}
+
+		if ( $args['wrap'] ) {
+			$val .= $this->close_div();
+			$val .= $this->close_div();
+		}
+
+		return $val;
+	}
+
+	public function make_checkbox( $args = array() ) {
+		$defaults   = $this->get_default_input_parameters(
+			array(
+				'checkvalue' => '',
+				'checked'    => false,
+			)
+		);
+		$args       = wp_parse_args( $args, $defaults );
+		$is_checked = empty( $args['checked'] ) ? ' checked' : '';
+		$val        = '';
+
+		if ( $args['wrap'] ) {
+			$val .= $this->open_row_div();
+			$val .= $this->open_col_div( $args['offset'] );
+		}
+
+		$val .= '<input type="checkbox" id="' . $args['name'] . '" name="' . $args['name'] . '" value="' . $args['checkvalue'] . '" />';
+		$val .= '<label for="' . $args['name'] . '" style="margin: 0 0 0 5px;">' . $args['label_text'] . '</label>';
 
 		if ( $args['field_desc'] ) {
 			$val .= $this->make_description( $args['name'], $args['field_desc'], $args['additional_text'] );

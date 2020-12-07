@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @return mixed
  */
-function coe_am_get_taxonomy_data() {
+function coe_am_get_saved_metadata() {
 	return apply_filters( 'coe_am_get_taxonomy_data', get_option( 'coe_am_metadata', array() ) );
 }
 
@@ -66,62 +66,85 @@ add_action( 'admin_init', 'coe_am_flush_rewrite_rules' );
  * @param string $custom       Custom message if necessary. Optional. Default empty string.
  * @return bool|string false on no message, else HTML div with our notice message.
  */
-function coe_am_admin_notices( $action = '', $object_type = '', $success = true, $custom = '' ) {
+function coe_am_admin_notices( $action = '', $success = true, $custom = '' ) {
+	$class = array(
+		$success ? 'updated' : 'error',
+		'notice',
+		'is-dismissable',
+	);
 
-	$class       = array();
-	$class[]     = $success ? 'updated' : 'error';
-	$class[]     = 'notice is-dismissible';
-	$object_type = esc_attr( $object_type );
+}
+// function coe_am_admin_notices( $action = '', $object_type = '', $success = true, $custom = '' ) {
 
-	$messagewrapstart = '<div id="message" class="' . implode( ' ', $class ) . '"><p>';
-	$message          = '';
-	$messagewrapend   = '</p></div>';
+// 	$class       = array();
+// 	$class[]     = $success ? 'updated' : 'error';
+// 	$class[]     = 'notice is-dismissible';
+// 	$object_type = esc_attr( $object_type );
 
-	if ( 'add' === $action ) {
-		if ( $success ) {
-			$message .= sprintf( __( '%s has been successfully added', $_coe['text'] ), $object_type );
-		} else {
-			$message .= sprintf( __( '%s has failed to be added', $_coe['text'] ), $object_type );
-		}
-	} elseif ( 'update' === $action ) {
-		if ( $success ) {
-			$message .= sprintf( __( '%s has been successfully updated', $_coe['text'] ), $object_type );
-		} else {
-			$message .= sprintf( __( '%s has failed to be updated', $_coe['text'] ), $object_type );
-		}
-	} elseif ( 'delete' === $action ) {
-		if ( $success ) {
-			$message .= sprintf( __( '%s has been successfully deleted', $_coe['text'] ), $object_type );
-		} else {
-			$message .= sprintf( __( '%s has failed to be deleted', $_coe['text'] ), $object_type );
-		}
-	} elseif ( 'import' === $action ) {
-		if ( $success ) {
-			$message .= sprintf( __( '%s has been successfully imported', $_coe['text'] ), $object_type );
-		} else {
-			$message .= sprintf( __( '%s has failed to be imported', $_coe['text'] ), $object_type );
-		}
-	} elseif ( 'error' === $action ) {
-		if ( ! empty( $custom ) ) {
-			$message = $custom;
-		}
+// 	$messagewrapstart = '<div id="message" class="' . implode( ' ', $class ) . '"><p>';
+// 	$message          = '';
+// 	$messagewrapend   = '</p></div>';
+
+// 	if ( 'add' === $action ) {
+// 		if ( $success ) {
+// 			$message .= sprintf( __( '%s has been successfully added', $_coe['text'] ), $object_type );
+// 		} else {
+// 			$message .= sprintf( __( '%s has failed to be added', $_coe['text'] ), $object_type );
+// 		}
+// 	} elseif ( 'update' === $action ) {
+// 		if ( $success ) {
+// 			$message .= sprintf( __( '%s has been successfully updated', $_coe['text'] ), $object_type );
+// 		} else {
+// 			$message .= sprintf( __( '%s has failed to be updated', $_coe['text'] ), $object_type );
+// 		}
+// 	} elseif ( 'delete' === $action ) {
+// 		if ( $success ) {
+// 			$message .= sprintf( __( '%s has been successfully deleted', $_coe['text'] ), $object_type );
+// 		} else {
+// 			$message .= sprintf( __( '%s has failed to be deleted', $_coe['text'] ), $object_type );
+// 		}
+// 	} elseif ( 'import' === $action ) {
+// 		if ( $success ) {
+// 			$message .= sprintf( __( '%s has been successfully imported', $_coe['text'] ), $object_type );
+// 		} else {
+// 			$message .= sprintf( __( '%s has failed to be imported', $_coe['text'] ), $object_type );
+// 		}
+// 	} elseif ( 'error' === $action ) {
+// 		if ( ! empty( $custom ) ) {
+// 			$message = $custom;
+// 		}
+// 	}
+
+// 	if ( $message ) {
+
+// 		/**
+// 		 * Filters the custom admin notice for CPTUI.
+// 		 *
+// 		 * @since 1.0.0
+// 		 *
+// 		 * @param string $value            Complete HTML output for notice.
+// 		 * @param string $action           Action whose message is being generated.
+// 		 * @param string $message          The message to be displayed.
+// 		 * @param string $messagewrapstart Beginning wrap HTML.
+// 		 * @param string $messagewrapend   Ending wrap HTML.
+// 		 */
+// 		return apply_filters( 'coe_am_admin_notice', $messagewrapstart . $message . $messagewrapend, $action, $message, $messagewrapstart, $messagewrapend );
+// 	}
+
+// 	return false;
+// }
+
+/**
+ * Return an array of all metadata slugs that have been created by our plugin.
+ *
+ * @since 1.0.0
+ *
+ * @return array our metadata slugs.
+ */
+function coe_am_get_metadata_slugs() {
+	$taxonomies = get_option( 'coe_am_metadata' );
+	if ( ! empty( $taxonomies ) ) {
+		return array_keys( $taxonomies );
 	}
-
-	if ( $message ) {
-
-		/**
-		 * Filters the custom admin notice for CPTUI.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param string $value            Complete HTML output for notice.
-		 * @param string $action           Action whose message is being generated.
-		 * @param string $message          The message to be displayed.
-		 * @param string $messagewrapstart Beginning wrap HTML.
-		 * @param string $messagewrapend   Ending wrap HTML.
-		 */
-		return apply_filters( 'coe_am_admin_notice', $messagewrapstart . $message . $messagewrapend, $action, $message, $messagewrapstart, $messagewrapend );
-	}
-
-	return false;
+	return array();
 }

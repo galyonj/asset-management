@@ -99,12 +99,56 @@ function coe_am_load_textdomain() {
 }
 add_action( 'plugins_loaded', 'coe_am_load_textdomain' );
 
-function coe_am_enqueue_styles() {
-	$_coe = coe_am_populate_constants();
+function coe_am_enqueue_scripts( $hook_suffix ) {
+	$_coe                  = coe_am_populate_constants();
+	$core                  = get_taxonomies( array( '_builtin' => true ) );
+	$public                = get_taxonomies(
+		array(
+			'_builtin' => false,
+			'public'   => true,
+		)
+	);
+	$private               = get_taxonomies(
+		array(
+			'_builtin' => false,
+			'public'   => false,
+		)
+	);
+	$registered_taxonomies = array_merge( $core, $public, $private );
+	$options               = array(
+		'confirm_delete'      => __( 'This will delete the metadata and any assigned terms. Do you wish to proceed?', $_coe['text'] ),
+		'existing_taxonomies' => $registered_taxonomies,
+	);
 
-	wp_enqueue_style( 'bootstrap-css', $_coe['url'] . 'assets/bootstrap.min.css' );
+	if ( wp_doing_ajax() ) {
+		return;
+	}
+
+	/**
+	 * Enqueue the styles and scripts we need on our pages
+	 *
+	 * @since 1.0.1
+	 * @uses wp_enqueue_style
+	 * @uses wp_enqueue_script
+	 * @param string $hook_suffix Returns the same data as calling WP_Screen()->base
+	 */
+	//wp_enqueue_style( $handle:string, $src:string, $deps:array, $ver:string|boolean|null, $media:string )
+	if ( 'asset_page_metadata' === $hook_suffix ) {
+		wp_enqueue_style( 'coe-am', plugins_url( 'assets/bootstrap.min.css', __FILE__ ), array( 'wp-jquery-ui-dialog' ), $_coe['version'], 'all' );
+		wp_enqueue_script( 'coe-am', plugins_url( 'assets/coe-am.js', __FILE__ ), array( 'jquery', 'jquery-ui-dialog', 'postbox' ), $_coe['version'], true );
+	}
+
+	/**
+	 * Now we create our options and make them available to JS
+	 * to make it easier for the plugin front/back end to work together
+	 *
+	 * @since 1.0.0
+	 * @param array $options array of options to call when creating dialogs.
+	 * @uses wp_localize_script
+	 */
+	wp_localize_script( 'coe-am', 'coe_am_saved_metadata', $options );
 }
-add_action( 'admin_enqueue_scripts', 'coe_am_enqueue_styles' );
+add_action( 'admin_enqueue_scripts', 'coe_am_enqueue_scripts' );
 
 /**
  * Create the submenu for our plugin and post type
@@ -135,7 +179,6 @@ require_once $_coe['path'] . 'inc/metaboxes.php';
  * @return mixed multidimensional array of taxonomy values
  */
 // function coe_am_add_tax_option( $arr = array() ) {
-// 	add_option( 'coe_am_metadata', array(), '', 'yes' );
 // 	delete_option( 'coe_am_metadata' );
 // }
 // add_action( 'plugins_loaded', 'coe_am_add_tax_option' );
@@ -165,7 +208,7 @@ function coe_am_create_custom_taxonomies() {
 			 *
 			 * Dynamic part of the filter name is the chosen taxonomy slug.
 			 *
-			 * @since 1.7.0
+			 * @since 1.0.1
 			 *
 			 * @param bool  $value Whether or not to skip the taxonomy.
 			 * @param array $tax   Current taxonomy being registered.
@@ -177,7 +220,7 @@ function coe_am_create_custom_taxonomies() {
 			/**
 			 * Filters whether or not to skip registration of the current iterated taxonomy.
 			 *
-			 * @since 1.7.0
+			 * @since 1.0.1
 			 *
 			 * @param bool  $value Whether or not to skip the taxonomy.
 			 * @param array $tax   Current taxonomy being registered.
@@ -246,25 +289,32 @@ function coe_am_register_single_taxonomy( $tax = array() ) {
 	);
 
 	$args = array(
-		'labels'              => $labels,
-		'description'         => ( isset( $tax['description'] ) ) ? $tax['description'] : '',
-		'public'              => ( isset( $tax['public'] ) ) ? $tax['public'] : true,
-		'publicly_queryable'  => ( isset( $tax['publicly_queryable'] ) ) ? $tax['publicly_queryable'] : true,
-		'exclude_from_search' => ( isset( $tax['exclude_from_search'] ) ) ? $tax['exclude_from_search'] : false,
-		'show_admin_column'   => ( isset( $tax['show_admin_column'] ) ) ? $tax['show_admin_column'] : true,
-		'show_ui'             => ( isset( $tax['show_ui'] ) ) ? $tax['show_ui'] : true,
-		'show_in_menu'        => ( isset( $tax['show_in_menu'] ) ) ? $tax['show_in_menu'] : true,
-		'query_var'           => ( isset( $tax['query_var'] ) ) ? $tax['query_var'] : true,
-		'show_in_admin_bar'   => ( isset( $admin ) ) ? $admin : true,
-		'capability_type'     => ( isset( $tax['capability_type'] ) ) ? $tax['capability_type'] : 'post',
-		'has_archive'         => ( isset( $tax['has_archive'] ) ) ? $tax['has_archive'] : true,
+		'name'                => $name,
+		'capability_type'     => ( isset( $data['capability_type'] ) ) ? $data['capability_type'] : 'post',
+		'description'         => ( isset( $data['description'] ) ) ? $data['description'] : '',
+		'exclude_from_search' => ( isset( $data['exclude_from_search'] ) ) ? $data['exclude_from_search'] : false,
+		'has_archive'         => ( isset( $data['has_archive'] ) ) ? $data['has_archive'] : true,
 		'hierarchical'        => ( isset( $hierarchical ) ) ? $hierarchical : true,
-		'rewrite'             => ( isset( $tax['rewrite'] ) ) ? $tax['rewrite'] : array(
-			'slug'         => ( isset( $tax['rewrite']['slug'] ) ) ? $tax['rewrite']['slug'] : $name,
-			'with_front'   => ( isset( $tax['rewrite']['with_front'] ) ) ? $tax['rewrite']['with_front'] : true,
-			'hierarchical' => ( isset( $tax['rewrite']['hierarchical'] ) ) ? $tax['rewrite']['hierarchical'] : false,
+		'labels'              => $labels,
+		'menu_icon'           => ( isset( $data['menu_icon'] ) ) ? $data['menu_icon'] : 'dashicons-admin-generic',
+		'menu_position'       => ( isset( $data['menu_position'] ) ) ? $data['menu_position'] : 21,
+		'meta_box_cb'         => $meta_box_cb,
+		'public'              => ( isset( $data['public'] ) ) ? $data['public'] : true,
+		'publicly_queryable'  => ( isset( $data['publicly_queryable'] ) ) ? $data['publicly_queryable'] : true,
+		'query_var'           => ( isset( $data['query_var'] ) ) ? $data['query_var'] : true,
+		'rewrite'             => array(
+			'slug'         => $name,
+			'with_front'   => true,
+			'hierarchical' => false,
 		),
-		'supports'            => ( isset( $tax['supports'] ) ) ? $tax['supports'] : array(
+		'show_admin_column'   => ( isset( $data['show_admin_column'] ) ) ? $data['show_admin_column'] : true,
+		'show_in_admin_bar'   => ( isset( $data['show_in_admin_bar'] ) ) ? $data['show_in_admin_bar'] : false,
+		'show_in_menu'        => ( isset( $data['show_in_menu'] ) ) ? $data['show_in_menu'] : true,
+		'show_in_nav_menus'   => ( isset( $data['show_in_nav_menus'] ) ) ? $data['show_in_nav_menus'] : true,
+		'show_in_rest'        => ( isset( $data['show_in_rest'] ) ) ? $data['show_in_rest'] : true,
+		'rest_base'           => ( isset( $data['rest_base'] ) ) ? $data['rest_base'] : strtolower( $plural ),
+		'show_ui'             => ( isset( $data['show_ui'] ) ) ? $data['show_ui'] : true,
+		'supports'            => ( isset( $data['supports'] ) ) ? $data['supports'] : array(
 			'title',
 			'editor',
 			'excerpt',
@@ -273,11 +323,6 @@ function coe_am_register_single_taxonomy( $tax = array() ) {
 			'page-attributes',
 			'post-formats',
 		),
-		'show_in_rest'        => ( isset( $tax['show_in_rest'] ) ) ? $tax['show_in_rest'] : true,
-		'menu_position'       => ( isset( $tax['menu_position'] ) ) ? $tax['menu_position'] : 21,
-		'menu_icon'           => ( isset( $tax['menu_icon'] ) ) ? $tax['menu_icon'] : 'dashicons-admin-generic',
-		'show_in_nav_menus'   => ( isset( $tax['show_in_nav_menus'] ) ) ? $tax['show_in_nav_menus'] : true,
-		'meta_box_cb'         => $meta_box_cb,
 	);
 
 	$object_type = ! empty( $tax['object_types'] ) ? $tax['object_types'] : 'asset';
