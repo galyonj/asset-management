@@ -122,8 +122,18 @@ function coe_am_metadata_html() {
 			<pre>
 			<?php
 			if ( 'edit' === $action ) {
-				//print_r( $_POST );
-				//print_r( get_terms( 'rods', array( 'hide_empty' => false ) ) );
+				$terms = get_terms(
+					array(
+						//'taxonomy'   => 'region',
+						'hide_empty' => false,
+						'orderby'    => 'term_group',
+					)
+				);
+
+				foreach ( $terms as $term ) {
+					print_r( $term->taxonomy . ' => ' . $term->name );
+					echo '<br>';
+				}
 			} else {
 				print_r( get_option( 'coe_am_metadata' ) );
 			}
@@ -339,95 +349,104 @@ function coe_am_display_edit_metadata( $tab = 'edit' ) {
 					</div> <!-- header -->
 					<div class="inside">
 						<div class="main">
-						<?php
-						echo $ui->make_text_input(
-							array(
-								'additional_text' => '',
-								'field_desc'      => __( 'Please use only alphanumeric characters and spaces.', $_coe['text'] ),
-								'label_text'      => __( 'Name', $_coe['text'] ),
-								'maxlength'       => 32,
-								'name'            => 'single_name',
-								'placeholder'     => __( '(e.g. Region)', $_coe['text'] ),
-								'required'        => false,
-								'textvalue'       => '',
-								'wrap'            => true,
+							<?php
+							echo $ui->make_text_input(
+								array(
+									'additional_text' => '',
+									'field_desc'      => __( 'Please use only alphanumeric characters and spaces.', $_coe['text'] ),
+									'label_text'      => __( 'Name', $_coe['text'] ),
+									'maxlength'       => 32,
+									'name'            => 'single_name',
+									'placeholder'     => __( '(e.g. Region)', $_coe['text'] ),
+									'required'        => false,
+									'textvalue'       => '',
+									'wrap'            => true,
+								)
+							);
+							?>
+							<?php
+							echo $ui->make_text_input(
+								array(
+									'additional_text' => '',
+									'field_desc'      => __( 'Please use only alphanumeric characters and spaces.', $_coe['text'] ),
+									'label_text'      => __( 'Plural Name', $_coe['text'] ),
+									'maxlength'       => 32,
+									'name'            => 'plural_name',
+									'placeholder'     => __( '(e.g. Regions)', $_coe['text'] ),
+									'required'        => false,
+									'textvalue'       => '',
+									'wrap'            => true,
+								)
+							);
+							?>
+							<?php
+							$options = array(
+								array(
+									'value'    => '0',
+									'text'     => __( 'No', $_coe['text'] ),
+									'selected' => 'selected',
+								),
+								array(
+									'value' => '1',
+									'text'  => __( 'Yes', $_coe['text'] ),
+								),
+							);
+							echo $ui->make_select_input(
+								array(
+									'additional_text' => '',
+									'field_desc'      => __( 'Choose whether you wish to be able to assign multiple terms to an asset.', $_coe['text'] ),
+									'label_text'      => __( 'Assign Multiple Values', $_coe['text'] ),
+									'name'            => 'assign_multiple',
+									'wrap'            => true,
+									'options'         => $options,
+								)
+							);
+							?>
+							<?php
+							$options = array(
+								array(
+									'value'    => 'false',
+									'text'     => __( 'No', $_coe['text'] ),
+									'selected' => 'selected',
+								),
+								array(
+									'value' => 'true',
+									'text'  => __( 'Yes', $_coe['text'] ),
+								),
+							);
+							echo $ui->make_select_input(
+								array(
+									'additional_text' => '',
+									'field_desc'      => __( 'Choose whether you wish for the values to be hierarchical in nature.', $_coe['text'] ),
+									'label_text'      => __( 'Hierarchical Values', $_coe['text'] ),
+									'name'            => 'hierarchical',
+									'wrap'            => true,
+									'options'         => $options,
+								)
+							);
+							?>
+							<?php
+							echo $ui->make_textarea(
+								array(
+									'additional_text' => '',
+									'field_desc'      => __( '(Optional) Enter a short, text-only description for your metadata.', $_coe['text'] ),
+									'label_text'      => __( 'Description', $_coe['text'] ),
+									'name'            => 'description',
+									'wrap'            => true,
+									'rows'            => 3,
+									'cols'            => '',
+								)
 							)
-						);
-						?>
-						<?php
-						echo $ui->make_text_input(
-							array(
-								'additional_text' => '',
-								'field_desc'      => __( 'Please use only alphanumeric characters and spaces.', $_coe['text'] ),
-								'label_text'      => __( 'Plural Name', $_coe['text'] ),
-								'maxlength'       => 32,
-								'name'            => 'plural_name',
-								'placeholder'     => __( '(e.g. Regions)', $_coe['text'] ),
-								'required'        => false,
-								'textvalue'       => '',
-								'wrap'            => true,
-							)
-						);
-						?>
-						<?php
-						$options = array(
-							array(
-								'value'    => '0',
-								'text'     => __( 'No', $_coe['text'] ),
-								'selected' => 'selected',
-							),
-							array(
-								'value' => '1',
-								'text'  => __( 'Yes', $_coe['text'] ),
-							),
-						);
-						echo $ui->make_select_input(
-							array(
-								'additional_text' => '',
-								'field_desc'      => __( 'Choose whether you wish to be able to assign multiple terms to an asset.', $_coe['text'] ),
-								'label_text'      => __( 'Assign Multiple Values', $_coe['text'] ),
-								'name'            => 'assign_multiple',
-								'wrap'            => true,
-								'options'         => $options,
-							)
-						);
-						?>
-						<?php
-						$options = array(
-							array(
-								'value'    => 'false',
-								'text'     => __( 'No', $_coe['text'] ),
-								'selected' => 'selected',
-							),
-							array(
-								'value' => 'true',
-								'text'  => __( 'Yes', $_coe['text'] ),
-							),
-						);
-						echo $ui->make_select_input(
-							array(
-								'additional_text' => '',
-								'field_desc'      => __( 'Choose whether you wish for the values to be hierarchical in nature.', $_coe['text'] ),
-								'label_text'      => __( 'Hierarchical Values', $_coe['text'] ),
-								'name'            => 'hierarchical',
-								'wrap'            => true,
-								'options'         => $options,
-							)
-						);
-						?>
-						<?php
-						echo $ui->make_textarea(
-							array(
-								'additional_text' => '',
-								'field_desc'      => __( '(Optional) Enter a short, text-only description for your metadata.', $_coe['text'] ),
-								'label_text'      => __( 'Description', $_coe['text'] ),
-								'name'            => 'description',
-								'wrap'            => true,
-								'rows'            => 3,
-								'cols'            => '',
-							)
-						)
-						?>
+							?>
+							<p style="margin-bottom: 0;">
+								<input type="hidden" name="coe_am_post_types" value="asset">
+								<input type="hidden" name="action" value="coe_am_handle_metadata">
+								<input type="hidden" name="coe_status" id="coe_status" value="<?php echo esc_attr( $tab ); ?>" />
+								<input type="submit" class="coe-am-update button button-primary" name="coe_am_update" value="<?php echo esc_attr__( 'Update Metadata', $_coe['text'] ); ?>" />
+								<?php if ( ! empty( $current ) ) : ?>
+									<input type="hidden" name="tax_original" id="tax_original" value="<?php echo esc_attr( $current['name'] ); ?>" />
+								<?php endif; ?>
+							</p>
 						</div>
 					</div>
 				</div> <!-- basic-settings -->
@@ -445,8 +464,17 @@ function coe_am_display_edit_metadata( $tab = 'edit' ) {
 					</div> <!--header -->
 					<div class="inside">
 						<div class="main">
-						</div>
-					</div>
+							<p style="margin-bottom: 0;">
+								<input type="hidden" name="coe_am_post_types" value="asset">
+								<input type="hidden" name="action" value="coe_am_handle_metadata">
+								<input type="hidden" name="coe_status" id="coe_status" value="<?php echo esc_attr( $tab ); ?>" />
+								<input type="submit" class="coe-am-update button button-primary" name="coe_am_update" value="<?php echo esc_attr__( 'Update Metadata', $_coe['text'] ); ?>" />
+								<?php if ( ! empty( $current ) ) : ?>
+									<input type="hidden" name="tax_original" id="tax_original" value="<?php echo esc_attr( $current['name'] ); ?>" />
+								<?php endif; ?>
+							</p>
+						</div> <!-- main -->
+					</div> <!-- inside -->
 				</div> <!-- advanced settings -->
 			</div> <!-- #poststuff -->
 		</div> <!-- postbox-container -->
@@ -542,25 +570,22 @@ function coe_am_delete_metadata( $data = array() ) {
 		 * we delete the terms before we delete the taxonomy term
 		 * itself.
 		 *
-		 * @since 1.0.0
+		 * @since 1.0.1
 		 * @uses array $data array of $_POST request options
 		 * @uses get_terms function to get terms for a named taxonomy
 		 * @uses wp_delete_term function to delete a term for a specific taxonomy
 		*/
-		if ( isset( $data['delete_terms'] ) ) {
-			$terms = get_terms(
-				$data['select_metadata'],
-				array(
-					'fields'     => 'ids',
-					'hide_empty' => false,
-				)
-			);
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $data['select_metadata'],
+				'hide_empty' => false,
+			)
+		);
 
-			// This can be sped up by swapping wp_delete_term with a
-			// prepared wpdb query
-			foreach ( $terms as $term ) {
-				wp_delete_term( $term, $data['select_metadata'] );
-			}
+		// This can be sped up by swapping wp_delete_term with a
+		// prepared wpdb query
+		foreach ( $terms as $term ) {
+			wp_delete_term( $term->id, $data['select_metadata'] );
 		}
 
 		unset( $taxonomies[ $data['select_metadata'] ] );

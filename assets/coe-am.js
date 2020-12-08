@@ -36,4 +36,10 @@
 				],
 			});
 	});
+
+	$(".coe-am-edit").on("click", function (e) {
+		e.preventDefault();
+
+		$(".edit-metadata-basic, .edit-metadata-advanced").show();
+	});
 })(jQuery);
