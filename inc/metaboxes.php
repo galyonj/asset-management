@@ -16,12 +16,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 
 function coe_am_remove_default_meta_box() {
-	$_coe = coe_am_populate_constants();
+	$_coe = coe_am_constants();
 }
 
 // coe_am_meta_select_box
 function coe_am_create_select_meta_box() {
-	$_coe = coe_am_populate_constants();
+	$_coe = coe_am_constants();
 
 }
 add_action( 'add_meta_boxes', 'coe_am_create_select_meta_box' );

@@ -56,95 +56,67 @@ function coe_am_flush_rewrite_rules() {
 add_action( 'admin_init', 'coe_am_flush_rewrite_rules' );
 
 /**
- * Return a notice based on conditions.
+ * Check whether or not we're on a new install.
  *
  * @since 1.0.0
  *
- * @param string $action       The type of action that occurred. Optional. Default empty string.
- * @param string $object_type  Whether it's from a post type or taxonomy. Optional. Default empty string.
- * @param bool   $success      Whether the action succeeded or not. Optional. Default true.
- * @param string $custom       Custom message if necessary. Optional. Default empty string.
- * @return bool|string false on no message, else HTML div with our notice message.
+ * @return bool
  */
-function coe_am_admin_notices( $action = '', $success = true, $custom = '' ) {
-	$class = array(
-		$success ? 'updated' : 'error',
-		'notice',
-		'is-dismissable',
-	);
+function coe_am_is_new_install() {
+	$new_or_not = true;
+	$saved      = get_option( 'coe_am_new_install', '' );
 
+	if ( 'false' === $saved ) {
+		$new_or_not = false;
+	}
+
+	/**
+	 * Filters the new install status.
+	 *
+	 * Offers third parties the ability to override if they choose to.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param bool $new_or_not Whether or not site is a new install.
+	 */
+	return (bool) apply_filters( 'coe_am_is_new_install', $new_or_not );
 }
-// function coe_am_admin_notices( $action = '', $object_type = '', $success = true, $custom = '' ) {
-
-// 	$class       = array();
-// 	$class[]     = $success ? 'updated' : 'error';
-// 	$class[]     = 'notice is-dismissible';
-// 	$object_type = esc_attr( $object_type );
-
-// 	$messagewrapstart = '<div id="message" class="' . implode( ' ', $class ) . '"><p>';
-// 	$message          = '';
-// 	$messagewrapend   = '</p></div>';
-
-// 	if ( 'add' === $action ) {
-// 		if ( $success ) {
-// 			$message .= sprintf( __( '%s has been successfully added', $_coe['text'] ), $object_type );
-// 		} else {
-// 			$message .= sprintf( __( '%s has failed to be added', $_coe['text'] ), $object_type );
-// 		}
-// 	} elseif ( 'update' === $action ) {
-// 		if ( $success ) {
-// 			$message .= sprintf( __( '%s has been successfully updated', $_coe['text'] ), $object_type );
-// 		} else {
-// 			$message .= sprintf( __( '%s has failed to be updated', $_coe['text'] ), $object_type );
-// 		}
-// 	} elseif ( 'delete' === $action ) {
-// 		if ( $success ) {
-// 			$message .= sprintf( __( '%s has been successfully deleted', $_coe['text'] ), $object_type );
-// 		} else {
-// 			$message .= sprintf( __( '%s has failed to be deleted', $_coe['text'] ), $object_type );
-// 		}
-// 	} elseif ( 'import' === $action ) {
-// 		if ( $success ) {
-// 			$message .= sprintf( __( '%s has been successfully imported', $_coe['text'] ), $object_type );
-// 		} else {
-// 			$message .= sprintf( __( '%s has failed to be imported', $_coe['text'] ), $object_type );
-// 		}
-// 	} elseif ( 'error' === $action ) {
-// 		if ( ! empty( $custom ) ) {
-// 			$message = $custom;
-// 		}
-// 	}
-
-// 	if ( $message ) {
-
-// 		/**
-// 		 * Filters the custom admin notice for CPTUI.
-// 		 *
-// 		 * @since 1.0.0
-// 		 *
-// 		 * @param string $value            Complete HTML output for notice.
-// 		 * @param string $action           Action whose message is being generated.
-// 		 * @param string $message          The message to be displayed.
-// 		 * @param string $messagewrapstart Beginning wrap HTML.
-// 		 * @param string $messagewrapend   Ending wrap HTML.
-// 		 */
-// 		return apply_filters( 'coe_am_admin_notice', $messagewrapstart . $message . $messagewrapend, $action, $message, $messagewrapstart, $messagewrapend );
-// 	}
-
-// 	return false;
-// }
 
 /**
- * Return an array of all metadata slugs that have been created by our plugin.
  *
- * @since 1.0.0
- *
- * @return array our metadata slugs.
+ * @return void
  */
-function coe_am_get_metadata_slugs() {
-	$taxonomies = get_option( 'coe_am_metadata' );
-	if ( ! empty( $taxonomies ) ) {
-		return array_keys( $taxonomies );
-	}
-	return array();
+function coe_am_get_saved_taxes() {
+	return apply_filters( 'coe_am_get_saved_taxes', get_option( 'coe_am_metadata', array() ), get_current_blog_id() );
+}
+
+
+/**
+ * Construct admin notices for the metadata CRUD processes
+ *
+ * @param  string $message admin notice message text
+ * @param  bool $success whether the user action succeeded or not
+ * @return void
+ */
+function coe_am_admin_notices_helper( string $message, $success = true ) {
+	$action      = '';
+	$msg_class   = array();
+	$msg_class[] = $success ? 'updated' : 'error';
+	$msg_class[] = 'notice is-dismissable';
+	$msg_start   = '<div id="message" class"' . implode( ' ', $msg_class ) . '"></p>';
+	$msg         = '';
+	$msg_end     = '</p></div>';
+
+	return apply_filters( 'coe_am_admin_notice', $msg_start, $msg, $msg_end, $action, $msg, $msg_start, $msg_end );
+}
+
+/**
+ * filter_var shorthand because I'm lazy
+ *
+ * @since 1.0.3
+ * @param $val variable to be converted
+ * @return bool
+ */
+function coerce_bool( $val ) {
+	return filter_var( $val, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
 }
