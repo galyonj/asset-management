@@ -132,7 +132,7 @@ function coe_am_create_submenu() {
 	$parent_path = 'edit.php?post_type=asset';
 
 	if ( $is_dev ) {
-		add_submenu_page( $parent_path, __( 'List Metadata', $_coe['text'] ), __( 'Metadata List View', $_coe['text'] ), $capability, 'metadata-list', 'coe_am_metadata_list_html' );
+		add_submenu_page( $parent_path, __( 'Manage Metadata', $_coe['text'] ), __( 'Manage Metadata Dev', $_coe['text'] ), $capability, 'metadata-display', 'coe_am_metadata_display' );
 	}
 	add_submenu_page( $parent_path, __( $menu_title, $_coe['text'] ), __( 'Manage Metadata', $_coe['text'] ), $capability, 'metadata', 'coe_am_metadata_html' );
 }
@@ -152,6 +152,7 @@ function coe_am_required_files() {
 	require_once $_coe['path'] . 'inc/register-cpt.php';
 	require_once $_coe['path'] . 'inc/metadata-html.php';
 	require_once $_coe['path'] . 'inc/metadata-list.php';
+	require_once $_coe['path'] . 'inc/metadata-display.php';
 	require_once $_coe['path'] . 'inc/process-metadata.php';
 	require_once $_coe['path'] . 'inc/metaboxes.php';
 	require_once $_coe['path'] . 'inc/deactivation.php';

@@ -60,19 +60,19 @@ function coe_am_metadata_html() {
 			'url'      => esc_url( add_query_arg( array( 'action' => 'edit' ) ), $page_path ),
 			'selected' => 'false',
 		);
-		$tabs['build']  = array(
-			'action'   => 'build',
-			'text'     => esc_html__( 'Shortcode Builder', 'coe-asset-management' ),
-			'classes'  => $classes,
-			'url'      => esc_url( add_query_arg( array( 'action' => 'build' ) ), $page_path ),
-			'selected' => false,
-		);
 		$tabs['view']   = array(
 			'action'   => 'view',
 			'text'     => esc_html__( 'View Metadata Terms', 'coe-asset-management' ),
 			'classes'  => $classes,
 			'url'      => esc_url( add_query_arg( array( 'action' => 'view' ) ), $page_path ),
 			'selected' => 'false',
+		);
+		$tabs['build']  = array(
+			'action'   => 'build',
+			'text'     => esc_html__( 'Shortcode Builder', 'coe-asset-management' ),
+			'classes'  => $classes,
+			'url'      => esc_url( add_query_arg( array( 'action' => 'build' ) ), $page_path ),
+			'selected' => false,
 		);
 		$tabs['import'] = array(
 			'action'   => 'import',
@@ -86,7 +86,7 @@ function coe_am_metadata_html() {
 	<div class="wrap">
 		<h1>
 			<?php
-			echo esc_html( get_admin_page_title() );
+			echo esc_attr( get_admin_page_title() );
 			?>
 		</h1>
 		<nav class="nav-tab-wrapper wp-clearfix" aria-label="Secondary Menu">
@@ -699,7 +699,7 @@ function coe_am_metadata_html() {
 								<tr>
 								<?php
 								foreach ( $col_headings as $heading ) {
-									echo '<th scope="col">' . $heading . '</th>';
+									echo '<th scope="col"><strong>' . $heading . '</strong></th>';
 								}
 								?>
 								</tr>
@@ -717,7 +717,12 @@ function coe_am_metadata_html() {
 									?>
 									<tr>
 										<td style="width: 25%;">
-											<a href=""><strong><?php echo $tax->label; ?></strong></a>
+											<a href="<?php echo admin_url( 'edit-tags.php?taxonomy=' . $tax->name ); ?>"><strong><?php echo $tax->label; ?></strong></a>
+											<br>
+											<div class="row-actions">
+												<span class="add"><a href="<?php echo admin_url( 'edit-tags.php?taxonomy=' . $tax->name ); ?>">Manage Terms</a></span>
+												<!-- <span class="delete"><a href="#">Delete Metadata</a></span> -->
+											</div>
 										</td>
 										<td>
 										<?php
@@ -744,7 +749,7 @@ function coe_am_metadata_html() {
 								<tr>
 								<?php
 								foreach ( $col_headings as $heading ) {
-									echo '<th scope="col">' . $heading . '</th>';
+									echo '<th scope="col"><strong>' . $heading . '</strong></th>';
 								}
 								?>
 								</tr>

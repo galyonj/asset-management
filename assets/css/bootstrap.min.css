@@ -9514,3 +9514,6 @@ a.text-dark:hover {
 }
 
 /* Metadata list form display stuff */
+.metadata-container {
+	padding: 0;
+}

@@ -62,7 +62,7 @@ function coe_am_enqueue_scripts( string $hook_suffix ) {
 	 * @uses  wp_enqueue_script
 	 * @uses  wp_enqueue_style
 	 */
-	if ( 'asset_page_metadata' === $hook_suffix ) {
+	if ( 'asset_page_metadata' === $hook_suffix || 'asset_page_metadata-display' === $hook_suffix ) {
 		// wp_enqueue_style( 'coe-am', plugins_url( "assets/coe-am{$is_dev}.css", __FILE__ ), '', $_coe['version'] );
 		wp_enqueue_style( 'bootstrap', $_coe['url'] . 'assets/css/bootstrap.min.css', '', '4.5.3' );
 		wp_enqueue_style( 'fontawesome', $fontawesome, '', '5.15.1' );
