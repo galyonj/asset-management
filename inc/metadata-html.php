@@ -396,9 +396,35 @@ function coe_am_metadata_html() {
 										echo $ui->make_select_input(
 											array(
 												'additional_text' => '',
-												'field_desc' => esc_attr__( 'Whether or not the taxonomy should be publicly queryable.', $_coe['text'] ),
+												'field_desc' => esc_attr__( 'Whether or not the metadata should be publicly queryable.', $_coe['text'] ),
 												'label_text' => esc_attr__( 'Publicly Queryable', $_coe['text'] ),
 												'name' => 'publicly_queryable',
+												'wrap' => true,
+												'selections' => $select,
+											)
+										);
+										?>
+										<?php
+										$select['options'] = array(
+											array(
+												'value'   => '0',
+												'text'    => esc_attr__( 'No', $_coe['text'] ),
+												'default' => '1',
+											),
+											array(
+												'value' => '1',
+												'text'  => esc_attr__( 'Yes', $_coe['text'] ),
+											),
+										);
+
+										$selected           = isset( $current ) ? coerce_bool( $current['show_admin_column'] ) : '';
+										$select['selected'] = ( ! empty( $selected ) ) ? $current['show_admin_column'] : '';
+										echo $ui->make_select_input(
+											array(
+												'additional_text' => '',
+												'field_desc' => esc_attr__( 'Whether to display a column for the metadata on its post type listing screens.', $_coe['text'] ),
+												'label_text' => esc_attr__( 'Show Admin Column', $_coe['text'] ),
+												'name' => 'show_admin_column',
 												'wrap' => true,
 												'selections' => $select,
 											)
@@ -422,7 +448,7 @@ function coe_am_metadata_html() {
 										echo $ui->make_select_input(
 											array(
 												'additional_text' => '',
-												'field_desc' => esc_attr__( 'Whether to show the taxonomy in the admin menu.', $_coe['text'] ),
+												'field_desc' => esc_attr__( 'Whether to show the metadata in the admin menu.', $_coe['text'] ),
 												'label_text' => esc_attr__( 'Show in Menu', $_coe['text'] ),
 												'name' => 'show_in_menu',
 												'wrap' => true,
@@ -717,10 +743,10 @@ function coe_am_metadata_html() {
 									?>
 									<tr>
 										<td style="width: 25%;">
-											<a href="<?php echo admin_url( 'edit-tags.php?taxonomy=' . $tax->name ); ?>"><strong><?php echo $tax->label; ?></strong></a>
+											<a href="<?php echo admin_url( 'edit-tags.php?taxonomy=' . $tax->name . '&post_type=asset' ); ?>"><strong><?php echo $tax->label; ?></strong></a>
 											<br>
 											<div class="row-actions">
-												<span class="add"><a href="<?php echo admin_url( 'edit-tags.php?taxonomy=' . $tax->name ); ?>">Manage Terms</a></span>
+												<span class="add"><a href="<?php echo admin_url( 'edit-tags.php?taxonomy=' . $tax->name . '&post_type=asset' ); ?>">Manage Terms</a></span>
 												<!-- <span class="delete"><a href="#">Delete Metadata</a></span> -->
 											</div>
 										</td>

@@ -114,7 +114,7 @@ function coe_am_delete_tax( $data = array() ) {
 			)
 		);
 
-		if ( ! is_wp_error( $terms ) ) {
+		if ( $terms ) {
 			foreach ( $terms as $term ) {
 				wp_delete_term( $term->term_id, $data['select_tax'] );
 			}
