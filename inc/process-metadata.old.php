@@ -22,21 +22,21 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @since 1.0.3
  * @return array $tax Array of selected taxonomy settings
  */
-// function coe_am_get_selected_tax( $data = array(), $tax_deleted = false ) {
-// 	$nonce = ( ! empty( $_POST['coe_am_select_metadata_nonce_field'] ) ) ?? wp_verify_nonce( 'coe_am_select_metadata_nonce_field', 'coe_am_select_metadata_nonce_action' );
-// 	$tax   = false;
-// 	$taxes = coe_am_get_saved_taxes();
+function coe_am_get_selected_tax( $tax_deleted = false ) {
+	$nonce = ( ! empty( $_POST['coe_am_select_metadata_nonce_field'] ) ) ?? wp_verify_nonce( 'coe_am_select_metadata_nonce_field', 'coe_am_select_metadata_nonce_action' );
+	$tax   = false;
+	$taxes = coe_am_get_saved_taxes();
 
-// 	if ( ! empty( $_POST ) ) {
-// 		if ( $nonce ) {
-// 			if ( isset( $data['select_tax'] ) ) {
-// 				$tax = sanitize_text_field( $data['select_tax'] );
-// 			}
-// 		}
-// 	}
+	if ( ! empty( $_POST ) ) {
+		if ( $nonce ) {
+			if ( isset( $_POST['select_tax'] ) ) {
+				$tax = sanitize_text_field( $_POST['select_tax'] );
+			}
+		}
+	}
 
-// 	return $tax;
-// }
+	return $tax;
+}
 
 /**
  * Check form nonces and pass the $_POST data onto the
@@ -47,9 +47,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return void
  */
 function coe_am_process_tax() {
-	$nonce = ( ! empty( $_POST['coe_am_metadata_nonce_field'] ) ) ?? wp_verify_nonce( $_POST['coe_am_metadata_nonce_field'], 'coe_am_metadata_nonce_action' );
-	$tax   = false;
-	$taxes = get_option( 'coe_am_metadata' );
+	$nonce  = ( ! empty( $_POST['coe_am_metadata_nonce_field'] ) ) ?? wp_verify_nonce( $_POST['coe_am_metadata_nonce_field'], 'coe_am_metadata_nonce_action' );
+	$result = '';
 
 	if ( wp_doing_ajax() || ! is_admin() ) {
 		return;
@@ -59,31 +58,27 @@ function coe_am_process_tax() {
 		return;
 	}
 
-	/**
-	 * Check that the nonce passes verification and the $_POST
-	 * object isn't empty.
-	 *
-	 * @since 1.0.3
-	 */
-	if ( $nonce && ( ! empty( $_POST ) ) ) {
-		$result = '';
-		if ( isset( $_POST['select_tax'] ) ) {
-			$tax = sanitize_text_field( $_POST['select_tax'] );
-
-			if ( isset( $_POST['coe_am_delete'] ) ) {
+	if ( ! empty( $_POST ) ) {
+		if ( $nonce ) {
+			if ( isset( $_POST['coe_am_submit'] ) ) {
+				$result = coe_am_update_tax( $_POST );
+			} elseif ( isset( $_POST['coe_am_delete'] ) ) {
 				$result = coe_am_delete_tax( $_POST );
 				add_filter( 'coe_am_tax_deleted', '__return_true' );
-			} else {
-				return $tax;
 			}
 		}
 
-		if ( isset( $_POST['coe_am_submit'] ) ) {
-			$result = coe_am_update_tax( $_POST );
+		if ( isset( $_POST['coe_am_delete'] ) && empty( coe_am_get_tax_slugs() ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array( 'page' => 'metadata' ),
+					admin_url( 'edit.php?post_type=asset' ),
+				)
+			);
 		}
 	}
 }
-add_action( 'init', 'coe_am_process_tax', 5 );
+add_action( 'init', 'coe_am_process_tax', 8 );
 
 /**
  * Delete the selected taxonomy
@@ -92,7 +87,12 @@ add_action( 'init', 'coe_am_process_tax', 5 );
  * @return void
  */
 function coe_am_delete_tax( $data = array() ) {
-	$success = null;
+	$_coe = coe_am_constants();
+
+	// Check if they selected a tax to delete.
+	if ( empty( $data['select_tax'] ) ) {
+		return coe_am_admin_notices( 'error', '', false, esc_html__( 'Please select a metadata to delete', $_coe['text'] ) );
+	}
 
 	/**
 	 * Fires before a taxonomy is deleted from our saved options.
@@ -106,19 +106,6 @@ function coe_am_delete_tax( $data = array() ) {
 	$taxes = get_option( 'coe_am_metadata' );
 
 	if ( array_key_exists( strtolower( $data['select_tax'] ), $taxes ) ) {
-
-		$terms = get_terms(
-			array(
-				'taxonomy'   => $data['select_tax'],
-				'hide_empty' => false,
-			)
-		);
-
-		if ( ! is_wp_error( $terms ) ) {
-			foreach ( $terms as $term ) {
-				wp_delete_term( $term->term_id, $data['select_tax'] );
-			}
-		}
 
 		unset( $taxes[ $data['select_tax'] ] );
 
@@ -155,15 +142,6 @@ function coe_am_delete_tax( $data = array() ) {
 	return 'delete_fail';
 }
 
-/**
- * Sanitize submitted data, save that data to a custom
- * WordPress option array, and use that array to bootstrap
- * registration of custom taxonomies for our post type.
- *0
- * @since 1.0.0
- * @param array $data
- * @return void
- */
 function coe_am_update_tax( $data = array() ) {
 	$_coe = coe_am_constants();
 
@@ -188,16 +166,11 @@ function coe_am_update_tax( $data = array() ) {
 	}
 
 	/**
-	 * It's a _really_ bad idea to save form data without first sanitizing
-	 * it, so we want to loop through all of the fields being sent in our $data
+	 * It's a *really* bad idea to save form data without first sanitizing it,
+	 * so we want to loop through all of the fields being sent in our $data
 	 * array and, for every $value that is a string, we sanitize that field.
 	 *
-	 * For boolean representations, we'll coerce them into a boolean value that
-	 * WordPress approves of.
-	 *
-	 * Then we return those values back into the $data array to safely save to
-	 * our custom option that will be used to register new taxonomy types for our
-	 * custom post type.
+	 * Then we return those values back into the $data array for safe use.
 	 *
 	 * @since 1.0.3
 	 * @param array $data array of submitted values
@@ -213,7 +186,7 @@ function coe_am_update_tax( $data = array() ) {
 	/**
 	 * Make sure we've got our metadata handy for later
 	 */
-	$taxes = get_option( 'coe_am_metadata' );
+	$taxes = coe_am_get_saved_taxes();
 
 	/**
 	 * Check if we already have a post type of that name.
@@ -248,6 +221,7 @@ function coe_am_update_tax( $data = array() ) {
 	$name            = trim( strtolower( preg_replace( $pattern, $replace, sanitize_text_field( $data['tax_name'] ) ) ) );
 	$assign_multiple = filter_var( $data['assign_multiple'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
 	$hierarchical    = filter_var( $data['assign_multiple'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+	$meta_box_cb     = '';
 
 	/**
 	 * For the most part, the default WordPress meta boxes
@@ -259,19 +233,19 @@ function coe_am_update_tax( $data = array() ) {
 	 * @since 1.0.0
 	 * @internal
 	 */
-	// if ( false === $hierarchical ) {
-	// 	if ( false === $assign_multiple ) {
-	// 		$meta_box_cb = 'coe_am_select_meta_box';
-	// 	} else {
-	// 		$meta_box_cb = 'coe_am_check_meta_box';
-	// 	}
-	// } else {
-	// 	if ( false === $assign_multiple ) {
-	// 		$meta_box_cb = 'coe_am_select_meta_box';
-	// 	} else {
-	// 		$meta_box_cb = 'post_categories_meta_box';
-	// 	}
-	// }
+	if ( false === $hierarchical ) {
+		if ( false === $assign_multiple ) {
+			$meta_box_cb = 'coe_am_select_meta_box';
+		} else {
+			$meta_box_cb = 'coe_am_check_meta_box';
+		}
+	} else {
+		if ( false === $assign_multiple ) {
+			$meta_box_cb = 'coe_am_select_meta_box';
+		} else {
+			$meta_box_cb = 'post_categories_meta_box';
+		}
+	}
 
 	$taxes[ $name ] = array(
 		// Basic stuff
@@ -279,8 +253,9 @@ function coe_am_update_tax( $data = array() ) {
 		'label'                => trim( ucwords( preg_replace( $pattern, $replace, sanitize_text_field( $data['label_plural'] ) ) ) ),
 		'label_singular'       => trim( ucwords( preg_replace( $pattern, $replace, sanitize_text_field( $data['label_singular'] ) ) ) ),
 		'description'          => esc_textarea( $data['description'] ),
-		//'assign_multiple'      => $assign_multiple,
+		'assign_multiple'      => $assign_multiple,
 		'hierarchical'         => $hierarchical,
+		'meta_box_cb'          => $meta_box_cb,
 		'object_types'         => array( 'asset' ),
 		// Visibility
 		'public'               => filter_var( $data['public'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE ),
@@ -350,15 +325,13 @@ function coe_am_convert_terms( $old_tax, $new_tax ) {
 
 	$terms = get_terms( $args );
 
-	if ( isset( $terms ) ) {
-		foreach ( $terms as $term ) {
-			if ( false === get_term_by( 'name', $term->name, $new_tax ) ) {
-				$term_args = array(
-					'slug'   => $term->slug,
-					'parent' => $term->parent,
-				);
-				wp_insert_term( $term->name, $new_tax, $term_args );
-			}
+	foreach ( $terms as $term ) {
+		if ( false === get_term_by( 'name', $term->name, $new_tax ) ) {
+			$term_args = array(
+				'slug'   => $term->slug,
+				'parent' => $term->parent,
+			);
+			wp_insert_term( $term->name, $new_tax, $term_args );
 		}
 	}
 

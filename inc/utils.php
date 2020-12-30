@@ -90,6 +90,15 @@ function coe_am_get_saved_taxes() {
 	return apply_filters( 'coe_am_get_saved_taxes', get_option( 'coe_am_metadata', array() ), get_current_blog_id() );
 }
 
+function coe_am_get_tax_slugs() {
+	$taxes = get_option( 'coe_am_metadata' );
+	if ( ! empty( $taxes ) ) {
+		return array_keys( $taxes );
+	}
+	return array();
+}
+
+
 
 /**
  * Construct admin notices for the metadata CRUD processes

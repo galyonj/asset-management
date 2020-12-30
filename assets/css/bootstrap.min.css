@@ -9485,10 +9485,32 @@ a.text-dark:hover {
 }
 /*# sourceMappingURL=bootstrap.min.css.map */
 
-.metadata-form .postbox .toggle-indicator:before {
-	content: "\f142";
-	display: inline-block;
-	font: normal 20px/1 dashicons;
-	speak: none;
-	text-decoration: none !important;
+/* Set the edit for settings boxes to display:none to prevent visibility flash on page load */
+.postbox.metadata-settings input[type="text"],
+.postbox.metadata-settings input[type="select"],
+.postbox.metadata-settings textarea {
+	max-width: 25rem;
 }
+
+.postbox.metadata-settings .warning-msg {
+	background: rgba(255, 193, 7, 0.35);
+	border: 1px solid #ffc107;
+	border-radius: 3px;
+	margin: 0 0 20px 0 !important;
+}
+
+.postbox.metadata-settings.advanced .warning-msg > i {
+	font-size: 1.2rem;
+}
+
+.postbox .inside .main {
+	margin-top: 20px;
+}
+
+.postbox .inside .main h3 {
+	font-size: 1rem;
+	border-bottom: 1px solid #ddd;
+	margin-bottom: 15px;
+}
+
+/* Metadata list form display stuff */

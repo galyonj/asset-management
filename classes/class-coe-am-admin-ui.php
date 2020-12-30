@@ -21,6 +21,7 @@
  *      </div>
  *  </div>
  */
+
 class Coe_Am_Admin_UI {
 	/**
 	 * Create the opening row tag
@@ -75,6 +76,10 @@ class Coe_Am_Admin_UI {
 		return ' aria-required="' . $attr . '" required="' . $attr . '"';
 	}
 
+	public function make_default_value( $value = '' ) {
+		return ' value="' . $value . '"';
+	}
+
 	public function make_description( $name = '', $help_text = '', $additional_text = '' ) {
 		$desc  = '<span class="' . $name . '-help form-text text-muted" style="font-style: italic; width: 100%;';
 		$desc .= ( $additional_text ) ? ' margin-bottom: 10px;">' : '">';
@@ -95,6 +100,12 @@ class Coe_Am_Admin_UI {
 		return ' maxlength="' . $max_length . '"';
 	}
 
+	public function make_hidden( $visible = true ) {
+		if ( ! isset( $visible ) ) {
+			return ' style="display: none;';
+		}
+	}
+
 	/**
 	 * Create an array containing the default parameters for
 	 * our inputs
@@ -105,6 +116,7 @@ class Coe_Am_Admin_UI {
 	public function get_default_input_parameters( $additions = array() ) {
 		return array_merge(
 			array(
+				'btn'         => false,
 				'field_desc'  => '',
 				'label_text'  => '',
 				'name'        => '',
@@ -131,6 +143,7 @@ class Coe_Am_Admin_UI {
 				'maxlength' => '',
 				'onblur'    => '',
 				'value'     => '',
+				'visible'   => true,
 			)
 		);
 
@@ -158,6 +171,10 @@ class Coe_Am_Admin_UI {
 			$val .= $this->make_required( $args['required'] );
 		}
 
+		if ( $args['textvalue'] ) {
+			$val .= $this->make_default_value( $args['textvalue'] );
+		}
+
 		$val .= '/>';
 
 		if ( $args['field_desc'] ) {
@@ -181,7 +198,7 @@ class Coe_Am_Admin_UI {
 	 */
 	public function make_select_input( $args = array() ) {
 		$defaults = $this->get_default_input_parameters(
-			array( 'options' => array() )
+			array( 'selections' => array() )
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -195,9 +212,32 @@ class Coe_Am_Admin_UI {
 
 		$val .= '<select class="form-control form-control-sm" id="' . $args['name'] . '" name="' . $args['name'] . '">';
 
-		foreach ( $args['options'] as $opt ) {
-			$selected = ( isset( $opt['selected'] ) ) ? 'selected="selected"' : '';
-			$val     .= '<option value="' . $opt['value'] . '"' . $selected . '>' . $opt['text'] . '</option>';
+		if ( ! empty( $args['selections']['options'] ) && is_array( $args['selections']['options'] ) ) {
+			foreach ( $args['selections']['options'] as $opt ) {
+				$selected_opt = $args['selections']['selected'];
+				$result       = '';
+				$is_bool      = coerce_bool( $opt['value'] );
+
+				if ( is_numeric( $selected_opt ) ) {
+					$selected = coerce_bool( $selected_opt );
+				}
+
+				if ( ! empty( $selected ) && is_bool( $selected ) ) {
+					$result = 'selected="selected"';
+				} else {
+					if ( array_key_exists( 'default', $opt ) && ! empty( $opt['default'] ) ) {
+						if ( empty( $selected ) ) {
+							$result = 'selected="selected"';
+						}
+					}
+				}
+
+				if ( ! is_numeric( $selected_opt ) && ( ! empty( $selected_opt ) && $selected_opt === $opt['value'] ) ) {
+					$result = 'selected="selected"';
+				}
+
+				$val .= '<option value="' . $opt['value'] . '" ' . $result . '>' . $opt['text'] . '</option>';
+			}
 		}
 
 		$val .= '</select>';
@@ -299,5 +339,9 @@ class Coe_Am_Admin_UI {
 		}
 
 		return $val;
+	}
+
+	public function make_btn( $args = array() ) {
+
 	}
 }

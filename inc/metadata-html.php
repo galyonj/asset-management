@@ -130,8 +130,8 @@ function coe_am_metadata_html() {
 				<div id="poststuff">
 				<?php
 				if ( empty( $action ) || 'add' === $action || 'edit' === $action ) {
-					$taxes        = coe_am_get_saved_taxes();
-					$selected_tax = coe_am_get_selected_tax( $_POST, $tax_deleted );
+					$taxes        = get_option( 'coe_am_metadata' );
+					$selected_tax = coe_am_process_tax( $_POST );
 
 					if ( $selected_tax && array_key_exists( $selected_tax, $taxes ) ) {
 						$current = $taxes[ $selected_tax ];
@@ -139,12 +139,12 @@ function coe_am_metadata_html() {
 					if ( 'edit' === $action ) {
 						?>
 						<form action="<?php esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" class="metadata-form">
-							<?php wp_nonce_field( 'coe_am_select_metadata_nonce_action', 'coe_am_select_metadata_nonce_field' ); ?>
-							<input type="hidden" name="action" value="coe_am_get_selected_tax">
+							<?php wp_nonce_field( 'coe_am_metadata_nonce_action', 'coe_am_metadata_nonce_field' ); ?>
+							<input type="hidden" name="action" value="coe_am_process_tax">
 							<div class="postbox metadata-select">
-								<div class="postbox-header">
-									<h2><?php echo esc_html_e( 'Start Here', $_coe['text'] ); ?></h2>
-								</div>
+								<!-- <div class="postbox-header">
+									<h2><?php echo esc_html_e( 'Select Metadata', $_coe['text'] ); ?></h2>
+								</div> -->
 								<div class="inside">
 									<div class="main">
 										<?php
@@ -177,7 +177,7 @@ function coe_am_metadata_html() {
 										?>
 										<div class="btn-wrapper">
 											<hr>
-											<input type="submit" class="coe-am-edit button button-primary" id="coe_am_edit_select" name="coe_am_edit_select" value="<?php echo esc_attr__( 'Edit Metadata' ); ?>">
+											<input type="submit" class="coe-am-edit button button-primary" id="coe_am_edit" name="coe_am_edit" value="<?php echo esc_attr__( 'Edit Metadata' ); ?>">
 											<input type="submit" class="coe-am-delete button button-secondary" id="coe_am_delete" name="coe_am_delete" value="<?php echo esc_attr__( 'Delete Metadata' ); ?>">
 										</div>
 									</div>
@@ -187,7 +187,7 @@ function coe_am_metadata_html() {
 						<?php
 					}
 
-					if ( empty( $action ) || 'add' === $action || ( 'edit' === $action && isset( $current ) ) ) {
+					if ( empty( $action ) || 'add' === $action || ( 'edit' === $action && isset( $current ) && isset( $_POST['coe_am_edit'] ) ) ) {
 						?>
 						<form action="<?php esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" class="metadata-form <?php echo ( ! empty( $action ) ) ? $action : 'add'; ?>-metadata">
 							<?php wp_nonce_field( 'coe_am_metadata_nonce_action', 'coe_am_metadata_nonce_field' ); ?>
@@ -211,6 +211,7 @@ function coe_am_metadata_html() {
 													'required' => true,
 													'textvalue' => ( ! empty( $current ) ) ? $current['label_singular'] : '',
 													'wrap' => true,
+													'visible' => false,
 												)
 											);
 											?>
@@ -224,22 +225,7 @@ function coe_am_metadata_html() {
 													'name' => 'label_plural', // cptui `label`
 													'placeholder' => esc_attr__( '(e.g. Methods)', $_coe['text'] ),
 													'required' => true,
-													'textvalue' => ( ! empty( $current ) ) ? $current['label'] : '',
-													'wrap' => true,
-												)
-											);
-											?>
-											<?php
-											echo $ui->make_text_input(
-												array(
-													'additional_text' => '',
-													'field_desc' => esc_attr__( 'Metadata Name', $_coe['text'] ),
-													'label_text' => esc_attr__( 'Metadata Name', $_coe['text'] ),
-													'maxlength' => 32,
-													'name' => 'tax_name',
-													'placeholder' => '',
-													'required' => true,
-													'textvalue' => ( ! empty( $current ) ) ? $current['name'] : '',
+													'textvalue' => ( ! empty( $current['label'] ) ) ? $current['label'] : '',
 													'wrap' => true,
 												)
 											);
@@ -331,7 +317,7 @@ function coe_am_metadata_html() {
 														'additional_text' => '',
 														'field_desc' => '',
 														'label_text' => esc_attr__( 'Delete the old metadata term', $_coe['text'] ),
-														'name'    => 'keep_old_tax',
+														'name'    => 'delete_old_tax',
 														'wrap'    => true,
 														'offset'  => true,
 														'checkvalue' => true,
@@ -340,13 +326,15 @@ function coe_am_metadata_html() {
 												);
 											}
 											?>
-											<hr>
-											<?php if ( 'edit' === $action ) : ?>
-											<input type="submit" class="coe-am-submit button button-primary" class="coe_am_submit" name="coe_am_submit" value="<?php echo esc_attr__( 'Save Changes' ); ?>">
-											<?php else : ?>
-											<input type="submit" class="coe-am-submit button button-primary" class="coe_am_submit" name="coe_am_submit" value="<?php echo esc_attr__( 'Create Metadata' ); ?>">
-											<input type="reset" class="coe-am-reset button button-secondary" class="coe_am_reset" name="coe_am_reset" value="<?php echo esc_attr__( 'Reset Form' ); ?>" style="color: #6c757d;" />
-											<?php endif; ?>
+											<div class="btn-wrapper">
+												<hr>
+												<?php if ( 'edit' === $action ) : ?>
+												<input type="submit" class="coe-am-submit button button-primary" class="coe_am_submit" name="coe_am_submit" value="<?php echo esc_attr__( 'Save Changes' ); ?>">
+												<?php else : ?>
+												<input type="submit" class="coe-am-submit button button-primary" class="coe_am_submit" name="coe_am_submit" value="<?php echo esc_attr__( 'Create Metadata' ); ?>">
+												<input type="reset" class="coe-am-reset button button-secondary" class="coe_am_reset" name="coe_am_reset" value="<?php echo esc_attr__( 'Reset Form' ); ?>" style="color: #6c757d;" />
+												<?php endif; ?>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -359,10 +347,11 @@ function coe_am_metadata_html() {
 									<div class="main">
 										<div class="p-3 mb-2 warning-msg">
 											<i class="fas fa-exclamation-triangle fa-pull-left"></i>
-											<p style="margin-bottom: 0;">Take care with the settings found below, as changing them from the defaults may cause unexpected behavior.</p>
+											<p style="margin-bottom: 0;">Be careful. Changing the settings found below may cause unexpected behavior.</p>
 										</div> <!-- warning div -->
 										<h3><?php echo esc_html_e( 'Visibility', $_coe['text'] ); ?></h3>
 										<p>The settings below determine whether the metadata is visible in certain parts of the WordPress interface.</p>
+										<input type="hidden" name="tax_name" id="tax_name" value="<?php ( ! empty( $current['tax_name'] ) ) ? $current['tax_name'] : ''; ?>">
 										<?php
 										$select['options'] = array(
 											array(
@@ -640,7 +629,7 @@ function coe_am_metadata_html() {
 										);
 										?>
 										<h3 style="font-size: 1rem; border-bottom: 1px solid #ddd; margin-bottom: 15px;">REST API</h3>
-										<p>The settings below determine whether (and how) the metadata is displayed via the WordPress REST API.<br>Disabling these options can break metadata functionality in Gutenberg.</p>
+										<p>The settings below determine whether (and how) the metadata is displayed via the WordPress REST API.<br>Disabling these options can break metadata functionality.</p>
 										<?php
 										$select['options'] = array(
 											array(
@@ -696,6 +685,73 @@ function coe_am_metadata_html() {
 						</form>
 						<?php
 					}
+				} elseif ( 'view' === $action ) {
+					$col_headings = array(
+						esc_html__( 'Metadata', $_coe['text'] ),
+						esc_html__( 'Assigned Terms', $_coe['text'] ),
+
+					);
+					$registered_taxes = get_object_taxonomies( 'asset', 'objects' );
+					?>
+					<form action="" method="post">
+						<table class="wp-list-table widefat striped table-view-list posts">
+							<thead>
+								<tr>
+								<?php
+								foreach ( $col_headings as $heading ) {
+									echo '<th scope="col">' . $heading . '</th>';
+								}
+								?>
+								</tr>
+							</thead>
+							<tbody>
+							<?php
+							if ( $registered_taxes ) {
+								foreach ( $registered_taxes as $tax ) {
+									$terms = get_terms(
+										array(
+											'taxonomy'   => $tax->name,
+											'hide_empty' => false,
+										)
+									);
+									?>
+									<tr>
+										<td style="width: 25%;">
+											<a href=""><strong><?php echo $tax->label; ?></strong></a>
+										</td>
+										<td>
+										<?php
+										if ( $terms ) {
+											echo '<ul>';
+											foreach ( $terms as $term ) {
+												echo '<li>' . $term->name . '</li>';
+											}
+											echo '</ul>';
+										} else {
+											esc_attr_e( 'This metadata doesn\'t have any assigned terms yet.', $_coe['text'] );
+											?>
+											<?php
+										}
+										?>
+										</td>
+									</tr>
+									<?php
+								}
+							}
+							?>
+							</tbody>
+							<tfoot>
+								<tr>
+								<?php
+								foreach ( $col_headings as $heading ) {
+									echo '<th scope="col">' . $heading . '</th>';
+								}
+								?>
+								</tr>
+							</tfoot>
+						</table>
+					</form>
+					<?php
 				}
 				?>
 				</div>
@@ -706,7 +762,9 @@ function coe_am_metadata_html() {
 				<?php
 				$option = coe_am_get_saved_taxes();
 
-				print_r( isset( $current['hierarchical'] ) );
+				if ( ! empty( $_POST ) ) {
+					print_r( $_POST );
+				}
 				echo '<hr>';
 				if ( ! empty( $_POST['select_tax'] ) ) {
 					print_r( $option[ $_POST['select_tax'] ] );
@@ -718,5 +776,23 @@ function coe_am_metadata_html() {
 			</div>
 			<?php endif; ?>
 		</div>
+		<div class="modal" tabindex="-1" id="coe_am_modal">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title"></h5>
+						<button type="button" data-dismiss="modal" aria-label="close modal" class="close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div> <!-- modal-header -->
+					<div class="modal-body">
+					</div> <!-- modal-body -->
+					<div class="modal-footer">
+						<input type="submit" value="Yes" name="coe_am_delete" class="modal-submit button button-primary" style="margin-right: 10px;">
+						<button type="button" class="modal-close button button-secondary" data-dismiss="modal">No</button>
+					</div> <!-- modal-footer -->
+				</div> <!-- modal-content -->
+			</div> <!-- modal-dialog -->
+		</div> <!-- modal -->
 	<?php
 }
