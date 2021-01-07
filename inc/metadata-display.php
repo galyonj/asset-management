@@ -606,9 +606,11 @@ function coe_am_metadata_display() {
 					<?php
 					if ( $is_dev ) {
 						?>
-					<div class="dev-col">
-
-					</div>
+						<div class="dev-col">
+							<?php
+							
+							?>
+						</div>
 						<?php
 					}
 					?>
